@@ -104,6 +104,9 @@ async def index_documents(session: AsyncSession, docs: list[ParsedDoc], embedder
             owner_id=m.get("owner"), team_id=m.get("team"), access_level=m.get("access_level", "team"), space=m.get("space", "team"),
             sensitivity=m.get("sensitivity", "low"), topic_key=m.get("topic_key"), updated_at=_as_date(m.get("updated_at", "2026-01-01")),
         ))
+    await session.flush()  # документы раньше чанков: внешний ключ doc_chunks → documents
+    for doc in docs:
+        m = doc.meta
         texts = [f"{m.get('title', '')}. {heading}. {text}" for heading, text in doc.sections]
         vectors = await embedder.embed(texts) if texts else []
         for pos, ((heading, text), vec, full) in enumerate(zip(doc.sections, vectors, texts)):

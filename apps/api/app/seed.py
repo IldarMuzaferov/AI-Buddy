@@ -68,6 +68,7 @@ async def is_seeded(session: AsyncSession) -> bool:
 
 async def seed_all(session: AsyncSession, mcp: McpClient, embedder: Embedder, seed_dir: str) -> None:
     session.add(Team(id="payments", name="Payments"))
+    await session.flush()
     for uid, name, role, gender, title in USERS:
         session.add(User(id=uid, name=name, email=f"{uid}@example.test", role=role, team_id="payments", gender=gender, title=title))
     await session.flush()
