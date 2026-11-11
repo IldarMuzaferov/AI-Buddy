@@ -74,7 +74,7 @@ async def patch_contact(contact_id: str, body: ContactPatch, subject: Subject = 
     return contact_view(contact)
 
 
-@router.delete("/contacts/{contact_id}", status_code=204)
+@router.delete("/contacts/{contact_id}", status_code=204, response_model=None)
 async def delete_contact(contact_id: str, subject: Subject = Depends(intern_only), session: AsyncSession = Depends(get_session)) -> None:
     contact = await _owned(session, subject, contact_id)
     await session.delete(contact)

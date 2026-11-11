@@ -75,7 +75,7 @@ async def patch_entry(entry_id: str, body: JournalPatch, subject: Subject = Depe
     return journal_view(entry)
 
 
-@router.delete("/journal/{entry_id}", status_code=204)
+@router.delete("/journal/{entry_id}", status_code=204, response_model=None)
 async def delete_entry(entry_id: str, subject: Subject = Depends(intern_only), session: AsyncSession = Depends(get_session)) -> None:
     await session.delete(await _owned(session, subject, entry_id))
     await session.commit()

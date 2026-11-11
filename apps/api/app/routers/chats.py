@@ -98,7 +98,7 @@ async def delete_chats(session: AsyncSession, chat_ids: list[str]) -> None:
     await session.execute(delete(Chat).where(Chat.id.in_(chat_ids)))
 
 
-@router.delete("/chats/{chat_id}", status_code=204)
+@router.delete("/chats/{chat_id}", status_code=204, response_model=None)
 async def delete_chat(chat: Chat = Depends(owned_chat), session: AsyncSession = Depends(get_session)) -> None:
     await delete_chats(session, [chat.id])
     await session.commit()
