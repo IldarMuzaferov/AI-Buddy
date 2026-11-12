@@ -8,11 +8,17 @@ from pathlib import Path
 
 import yaml
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-
+def _default_seed_dir() -> Path:
+    here = Path(__file__).resolve()
+    # локально: AI-Buddy/mcp/mock-corp/mock_corp/state.py → .../AI-Buddy/seed
+    # в контейнере: /app/mock_corp/state.py → /seed (через SEED_DIR)
+    for p in [here, *here.parents]:
+        if (p / "docker-compose.yml").exists() or (p / "Makefile").exists() or (p / ".git").exists():
+            return p / "seed"
+    return here.parents[-1] / "seed"
 
 def seed_dir() -> Path:
-    return Path(os.environ.get("SEED_DIR", str(REPO_ROOT / "seed")))
+    return Path(os.environ.get("SEED_DIR", str(_default_seed_dir())))
 
 
 def _today() -> date:
