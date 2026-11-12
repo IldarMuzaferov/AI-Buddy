@@ -13,8 +13,8 @@ cp .env.example .env
 docker compose up --build
 ```
 
-* API: http://localhost:8000/api · OpenAPI: http://localhost:8000/docs · справочник ручек: [API.md](API.md)
-* Поднимаются `db` (PostgreSQL 16), `redis`, `mock-corp` (MCP-имитация Jira/Confluence/Bitbucket/Mattermost/заявочной системы), `api`.
+* Фронтенд: http://localhost:5173 · API: http://localhost:8000/api · OpenAPI: http://localhost:8000/docs · справочник ручек: [API.md](API.md)
+* Поднимаются `db` (PostgreSQL 16), `redis`, `mock-corp` (MCP-имитация Jira/Confluence/Bitbucket/Mattermost/заявочной системы), `api` и `web`.
 * При первом старте применяются миграции и загружается сид. GPU не нужен.
 
 Тестовые логины (без пароля): `POST /api/auth/login {"user_id": "anya"}` — `anya` (стажёр, основной сценарий), `dima` (стажёр, первая неделя),
@@ -62,6 +62,7 @@ PYTHONPATH=../../mcp/mock-corp python -m app.cli eval  # make eval: 40+ вопр
 
 ```
 apps/api         FastAPI: app/ (роутеры, ассистент, сервисы), alembic/, tests/
+intern-path      React/TypeScript: интерфейс стажёра; Docker-сборка и Nginx-прокси к API
 mcp/mock-corp    один MCP-сервер (JSON-RPC: initialize, tools/list, tools/call): wiki, tracker, git, access, absence, org
 seed/wiki        мок-вики (20+ страниц: противоречие для S4, закрытые документы лида, страница-ловушка с инъекцией)
 prompts          промпты RCTF
@@ -78,4 +79,4 @@ RAG: чанки по заголовкам, права доступа приме�
 Заявки создаются только через `POST /actions/{id}/confirm` — у ассистента нет инструментов с побочными эффектами.
 
 Честные границы прототипа: эмбеддинги хранятся в JSON и ранжируются в Python (корпус маленький); перенос на pgvector — замена функции
-`search()`. Фронтенд в этом репозитории пока не собран — интерфейс описан в [API.md](API.md).
+`search()`. Фронтенд проксирует запросы `/api` к бэкенду через Nginx.

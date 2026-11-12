@@ -1,0 +1,139 @@
+.backend-switch {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.backend-switch select,
+.step-row select {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  padding: 5px 8px;
+}
+.login-top .backend-switch {
+  margin-left: auto;
+}
+.login-top {
+  flex-wrap: wrap;
+}
+.profile-settings {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+}
+.sb-row .folder-toggle {
+  opacity: 1;
+}
+.notifications-wrap {
+  position: relative;
+}
+.notification-count {
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: #006da8;
+  color: #fff;
+  border-radius: 15px;
+  padding: 0 5px;
+  font-size: 11px;
+}
+.inline-error {
+  color: #a32828;
+  background: #fff2f2;
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.section-actions {
+  margin: 14px 0;
+}
+.pre-line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.field {
+  margin: 10px 0;
+}
+.chat-compose {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 12px 0 10px;
+  z-index: 3;
+}
+.task-summary {
+  margin-bottom: 12px;
+}
+.task-summary .section-heading {
+  margin-top: 0;
+}
+.answer-text {
+  overflow-wrap: anywhere;
+}
+.answer-text p,
+.answer-text ol,
+.answer-text ul {
+  margin: 8px 0;
+}
+.answer-text pre,
+.api-output {
+  background: #f6f6f6;
+  padding: 10px;
+  border-radius: 10px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.answer-steps {
+  font-size: 13px;
+  color: var(--muted);
+}
+.result-card details {
+  margin: 6px 0;
+}
+.result-card .kv {
+  display: block;
+}
+.kv-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) 2fr;
+  gap: 10px;
+  padding: 4px 0;
+  overflow-wrap: anywhere;
+}
+.kv-row dd {
+  margin: 0;
+}
+.btn[aria-pressed="true"] {
+  background: #eaf6ff;
+  border-color: #9dd4f7;
+}
+.notif-panel {
+  max-width: calc(100vw - 24px);
+}
+.step-row {
+  flex-wrap: wrap;
+}
+fieldset {
+  border: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+summary {
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .login-top .backend-switch {
+    margin-left: 0;
+  }
+  .topbar .stage-pill {
+    font-size: 11px;
+  }
+  .chat-page h1 {
+    font-size: 26px;
+  }
+}
