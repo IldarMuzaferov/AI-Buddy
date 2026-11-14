@@ -44,8 +44,9 @@ docker compose up --build
 4. **S3 заявка**: «Мне нужен доступ к Jira-проекту PAY» → `POST /actions/{id}/confirm` → `POST /dev/access/approve` → уведомление и шаг чек-листа.
    Затем «Дай доступ к общему глобальному пространству» → отказ без заявки.
 5. **S4 расхождение**: «Как получить доступ к тестовому стенду?» → два варианта → подтвердить сообщение владельцу → замечание видно наставнику.
-6. **J журнал**: `POST /journal/suggest` → `POST /journal` → удалить чат → запись осталась → `POST /journal/draft` → `POST /journal/export` (PDF).
-7. **Приватность и наставник**: `GET /privacy`; под `boris` — `GET /mentor/interns` (прогресс есть) и `GET /chats/{id}/messages` → 403.
+6. **S6 отгул**: «Создай заявку на отгул» → ассистент уточняет дату и причину → после ответа показывает черновик для проверки и подтверждения.
+7. **J журнал**: `POST /journal/suggest` → `POST /journal` → удалить чат → запись осталась → `POST /journal/draft` → `POST /journal/export` (PDF).
+8. **Приватность и наставник**: `GET /privacy`; под `boris` — `GET /mentor/interns` (прогресс есть) и `GET /chats/{id}/messages` → 403.
 
 ## Разработка и тесты
 

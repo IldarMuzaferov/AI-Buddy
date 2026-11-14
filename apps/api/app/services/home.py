@@ -11,17 +11,16 @@ from app.models import Chat, Digest, InternStep, Notification, Task
 from app.services.common import InternContext
 
 
-async def build_digest(session: AsyncSession, intern: InternContext) -> dict:
+async def build_digest(session: AsyncSession, intern: InternContext) -> dict | None:
     chats = (await session.execute(select(Chat).where(Chat.user_id == intern.user.id).order_by(Chat.updated_at.desc()))).scalars().all()
     unresolved = next((c for c in chats if c.unresolved), None)
     last = unresolved or (chats[0] if chats else None)
     if last is None:
-        text = "Пока нечего продолжать. Задайте первый вопрос — здесь появится, на чём вы остановились."
-    else:
-        text = f"В последний раз вы разбирались с вопросом «{last.title}»."
-        if unresolved:
-            text += f" Не решено: {unresolved.title.lower()} — ответ не помог, можно спросить ещё раз или сразу пойти к человеку."
-    data = {"chat_id": last.id if last else None, "chat_title": last.title if last else None, "unresolved": bool(unresolved)}
+        return None
+    text = f"В последний раз вы разбирались с вопросом «{last.title}»."
+    if unresolved:
+        text += f" Не решено: {unresolved.title.lower()} — ответ не помог, можно спросить ещё раз или сразу пойти к человеку."
+    data = {"chat_id": last.id, "chat_title": last.title, "unresolved": bool(unresolved)}
     digest = await session.get(Digest, {"intern_id": intern.user.id, "day": today()})
     if digest is None:
         session.add(Digest(intern_id=intern.user.id, day=today(), text=text, data=data))

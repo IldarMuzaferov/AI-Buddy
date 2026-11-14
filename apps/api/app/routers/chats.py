@@ -147,13 +147,15 @@ async def _turn_stream(chat_id: str, subject: Subject, text: str, mode: str, ass
             history_rows = (await session.execute(select(Message).where(Message.chat_id == chat_id)
                                                   .order_by(Message.created_at.desc()).limit(7))).scalars().all()
             history = [{"role": "user" if m.role == "user" else "assistant", "content": m.content} for m in reversed(history_rows)][:-1]
+            previous_assistant = next((message for message in history_rows if message.role == "assistant"), None)
+            pending_action = (previous_assistant.meta or {}).get("pending_action") if previous_assistant else None
             attachments: list[str] = []
             for att in (await session.execute(select(Attachment).where(Attachment.id.in_(attachment_ids or []),
                                                                        Attachment.chat_id == chat_id))).scalars():
                 if att.kind == "log":
                     attachments.append(Path(att.path).read_text(encoding="utf-8", errors="replace")[:4000])
             turn = Turn(session=session, subject=subject, intern=intern, chat=chat, text=text, mode=mode, force_direct=force_direct,
-                        history=history, attachments=attachments, message_id=assistant_id)
+                        history=history, pending_action=pending_action, attachments=attachments, message_id=assistant_id)
             out = Outcome()
             async for name, data in orchestrator().answer(turn, out):
                 yield sse(name, data)

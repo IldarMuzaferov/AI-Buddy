@@ -93,7 +93,7 @@ async def test_home_checklist_and_notifications(api):
     assert (await api.post("dima", f"/api/notifications/{notes['items'][0]['id']}/read")).status_code == 404
     assert (await api.post("anya", "/api/notifications/read-all")).json()["unread"] == 0
     dima = (await api.get("dima", "/api/home")).json()
-    assert dima["stage"]["id"] == "w1" and dima["digest"]["chat_id"] is None
+    assert dima["stage"]["id"] == "w1" and dima["digest"] is None
 
 
 async def test_tasks_folders_lock_and_mentor_creates_task(api):

@@ -46,6 +46,9 @@ INJECTION = re.compile(r"игнорируй\s+(все\s+)?(правила|инс
 EMOTIONAL = re.compile(r"тяжело|не справля|страшно|стыдно|тупой|тупая|глуп|переживаю|не успеваю|выгора|устал")
 SENSITIVE = re.compile(r"зарплат|\bоклад|премиям?\b|премии|бонус|повышени\w+ (зп|зарплат)|увольн|уволят|\bзп\b")
 DOIT = re.compile(r"сделай за меня|реши за меня|сделай (мою |эту )?задач|напиши за меня|реши (мою |эту )?задач|сделай вместо|сделай вс[её] сам")
+CODE_REVIEW = re.compile(r"code[\s-]*review|код[\s-]*ревью|ревью кода|провер\S*\s+код")
+IGOR_NAME = re.compile(r"\bигор(?:ь|я|ю|ем|е)\b")
+ASK_PERSON = re.compile(r"\b(?:попрос\S*|напиш\S*|свяж\S*|скажи|пусть)\b")
 OUT_OF_SCOPE = re.compile(r"погод|анекдот|стих|рецепт|футбол|гороскоп|курс (доллара|валют)")
 PRACTICE = re.compile(r"практик|потренир|мини.?задани")
 GLOBAL = re.compile(r"глобальн|общ\S* пространств")
@@ -55,6 +58,7 @@ ORG = re.compile(r"отгул|отпуск|выходн|бюджет|обуче�
 INFRA = re.compile(r"ноутбук|техник|устройств|пропуск|монитор")
 CDLC = re.compile(r"код|репозитор|деплой|тест|лог|секрет|конфиг|ветк|сборк|grafana|графан|jira|джир|задач")
 DATE = re.compile(r"\d{1,2}\s+(январ|феврал|марта|апрел|мая|июн|июл|август|сентябр|октябр|ноябр|декабр)|\d{4}-\d{2}-\d{2}|завтра|послезавтра")
+ABSENCE_ACTION = re.compile(r"\b(?:создай|создать|оформи|оформить|подай|подать|составь|составить|заполни|заполнить)\b")
 PROJECT_KEY = re.compile(r"\b([A-Z]{2,10})\b")
 NOT_PROJECTS = {"VPN", "PR", "CI", "CD", "API", "HR", "BP", "PDF", "SSE", "MR", "QA", "IT", "OK"}
 
@@ -121,6 +125,12 @@ def rule_route(text: str, guide_topic: str | None = None, guide_streak: int = 0)
         return Route("emotional", "other", topic, True, 0.9, "emotional")
     if DOIT.search(t):
         return Route("howto", "cdlc", topic, False, 0.95, "guide", {"guide": "doit"})
+    if CODE_REVIEW.search(t) and IGOR_NAME.search(t) and ASK_PERSON.search(t):
+        timeframe = re.search(r"\bв ближайшие\s+\d+\s+минут\w*\b", t)
+        params = {"service": "billing", "message_intent": "code_review"}
+        if timeframe:
+            params["timeframe"] = timeframe.group(0)
+        return Route("lookup", "cdlc", "код-ревью", True, 0.95, "owner", params)
     if re.search(r"\bdocker[\s-]*compose\b", t):
         return Route("lookup", "cdlc", topic, False, 0.9, "lookup")
     if OUT_OF_SCOPE.search(t):
@@ -132,8 +142,11 @@ def rule_route(text: str, guide_topic: str | None = None, guide_streak: int = 0)
     keys = [k for k in PROJECT_KEY.findall(text) if k not in NOT_PROJECTS]
     if "доступ" in t and (re.search(r"jira|джир|проект", t) or keys):
         return Route("access_request", "cdlc", topic, False, 0.9, "access", {"project_key": keys[0] if keys else None, "level": _level(t)})
-    if re.search(r"отгул|отпуск", t) and DATE.search(t):
-        return Route("absence_request", "org", topic, True, 0.85, "absence", {"date_text": DATE.search(t).group(0)})
+    absence_date = DATE.search(t)
+    if (re.search(r"отгул|отпуск", t) and ABSENCE_ACTION.search(t)
+            and not re.search(r"\b(?:как|можно ли|стоит ли)\b", t)):
+        params = {"date_text": absence_date.group(0)} if absence_date else {}
+        return Route("absence_request", "org", topic, True, 0.85, "absence", params)
     if OWNER.search(t):
         return Route("lookup", "cdlc", topic, True, 0.85, "owner", {"service": t})
     if NEXT.search(t):

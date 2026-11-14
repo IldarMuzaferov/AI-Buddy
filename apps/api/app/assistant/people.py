@@ -85,6 +85,23 @@ def template_message(person: dict, intern_name: str, female: bool, topic: str, t
     return {"message": text, "questions": [], "duration": "обычно 20 минут"}
 
 
+def code_review_message(person: dict, task_title: str | None, timeframe: str | None = None) -> dict:
+    first = person.get("first") or person["name"].split()[0]
+    task = f" по задаче «{task_title}»" if task_title else ""
+    timing = f" Если будет возможность {timeframe}," if timeframe else ""
+    text = (f"{first}, привет!{timing} посмотри, пожалуйста, мой код{task} и проведи code review. "
+            "PR или файлы: [добавь ссылку]. Если сейчас неудобно, подскажи, пожалуйста, когда сможешь.")
+    return {
+        "message": text,
+        "questions": [
+            "Корректна ли логика изменений?",
+            "Хватает ли тестов для этого кода?",
+            "Видишь ли риски или недочёты, которые стоит исправить?",
+        ],
+        "duration": "около 20 минут",
+    }
+
+
 async def broker_message(llm: LLMClient, person: dict, intern_name: str, female: bool, topic: str, task_title: str | None) -> dict:
     fallback = template_message(person, intern_name, female, topic, task_title)
     if llm.is_fake:

@@ -20,6 +20,21 @@ async def test_s1_owner_person_card_and_save_contact(api):
     assert (await api.post("anya", "/api/contacts", {"person_id": "igor"})).status_code == 409
 
 
+async def test_code_review_request_suggests_message_to_igor(api):
+    events = await api.ask("Попроси Игоря Л. пусть в ближайшие 20 минут сделает code review")
+    card = first(events, "person_card")
+
+    assert first(events, "done")["route"] == "lookup"
+    assert card["name"] == "Игорь Л."
+    assert "не могу отправить сообщение" in text_of(events)
+    assert "Игорь, привет!" in card["how_to_ask"]
+    assert "в ближайшие 20 минут" in card["how_to_ask"]
+    assert "code review" in card["how_to_ask"]
+    assert "[добавь ссылку]" in card["how_to_ask"]
+    assert "логика изменений" in card["questions"][0]
+    assert any(source["document_id"] == "review" for name, source in events if name == "source")
+
+
 async def test_no_answer_offers_escalation_chain(api):
     events = await api.ask("Сколько стоит обед в столовой на третьем этаже?")
     assert first(events, "done")["route"] == "no_answer"
@@ -206,10 +221,21 @@ async def test_lookup_answers_with_sources_and_org_chain(api):
     assert first(laptop, "source")["document_id"] == "faq"
 
 
-async def test_s6_absence_request(api):
-    events = await api.ask("Оформи отгул на 20 ноября")
+async def test_s6_absence_request_collects_date_and_reason_before_draft(api):
+    chat_id = await api.new_chat()
+    initial = await api.ask("Создай заявку на отгул", chat_id)
+    assert first(initial, "action_draft") is None
+    assert "на какое число оформить отгул" in text_of(initial)
+    assert "какая причина" in text_of(initial)
+
+    date_reply = await api.ask("20 ноября", chat_id)
+    assert first(date_reply, "action_draft") is None
+    assert "какая причина" in text_of(date_reply)
+
+    events = await api.ask("Семейные обстоятельства", chat_id)
     draft = first(events, "action_draft")
     assert draft["type"] == "absence_request" and draft["payload"]["date_from"].endswith("-11-20")
+    assert draft["payload"]["reason"] == "Семейные обстоятельства"
     await api.patch("anya", f"/api/actions/{draft['action_id']}", {"reason": "Семейные дела"})
     confirmed = (await api.post("anya", f"/api/actions/{draft['action_id']}/confirm")).json()
     assert confirmed["external_id"].startswith("ABS-") and confirmed["external_status"] == "pending"

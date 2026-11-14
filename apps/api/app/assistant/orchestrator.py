@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.assistant import people as ppl
 from app.assistant import templates as tpl
 from app.assistant.retrieval import Hit, confident, detect_conflict, numbered_steps, safe_hits, search
-from app.assistant.router import Route, classify
+from app.assistant.router import DATE, Route, classify
 from app.assistant.text import first_sentences, short_topic
 from app.config import Settings
 from app.domain import NORMALIZATION, PRACTICE
@@ -59,6 +59,7 @@ class Turn:
     mode: str = "guide"
     force_direct: bool = False
     history: list[dict] = field(default_factory=list)
+    pending_action: dict | None = None
     attachments: list[str] = field(default_factory=list)
     message_id: str | None = None
 
@@ -92,9 +93,12 @@ class Orchestrator:
                 await set_flag(turn.session, "llm_fail_next", False)
                 raise LLMError("llm_timeout", "Модель не ответила за 30 секунд")
             task = await turn.session.get(Task, turn.chat.task_id) if turn.chat.task_id else None
-            route = await classify(self.llm, turn.text, history=turn.history, stage=turn.intern.stage.label,
-                                   task_title=task.title if task else None, guide_topic=turn.chat.guide_topic,
-                                   guide_streak=turn.chat.guide_streak)
+            if turn.pending_action and turn.pending_action.get("type") == "absence_request":
+                route = Route("absence_request", "org", "отгул", True, 1.0, "absence")
+            else:
+                route = await classify(self.llm, turn.text, history=turn.history, stage=turn.intern.stage.label,
+                                       task_title=task.title if task else None, guide_topic=turn.chat.guide_topic,
+                                       guide_streak=turn.chat.guide_streak)
             if turn.force_direct and turn.chat.guide_topic:
                 route = Route("howto", "cdlc", route.topic, False, 1.0, "guide", {"guide": turn.chat.guide_topic})
             out.route = route.route
@@ -289,13 +293,33 @@ class Orchestrator:
             yield e
 
     async def _absence(self, turn: Turn, route: Route, task: Task | None, out: Outcome) -> AsyncIterator[Event]:
+        pending = turn.pending_action or {}
+        date_text = pending.get("date_text") or route.params.get("date_text")
+        date_match = DATE.search(turn.text)
+        if date_match:
+            date_text = date_match.group(0)
+        reason = pending.get("reason") or _absence_reason(turn.text)
+        if not date_text or not reason:
+            out.meta["pending_action"] = {"type": "absence_request", "date_text": date_text, "reason": reason}
+            missing = []
+            if not date_text:
+                missing.append("на какое число оформить отгул")
+            if not reason:
+                missing.append("какая причина (можно кратко, без личных подробностей)")
+            prompt = "Уточни, пожалуйста, " + " и ".join(missing) + "."
+            async for e in self._stream_text(prompt, out):
+                yield e
+            for e in await self._doc_sources(turn.session, ("absence",), out):
+                yield e
+            return
+
         user = as_user(turn.subject.id, turn.subject.role)
         yield _status("balance", "Смотрю остаток дней")
         balance = await self.mcp.call("absence.get_balance", {"user_id": turn.intern.user.id}, user)
         manager = await self.mcp.call("org.get_manager", {"user_id": turn.intern.user.id}, user)
         hrbp = await self.mcp.call("org.get_hrbp", {"user_id": turn.intern.user.id}, user)
-        day = parse_day(route.params.get("date_text", ""))
-        payload = {"date_from": day.isoformat(), "date_to": day.isoformat(), "kind": "day_off", "reason": ""}
+        day = parse_day(date_text)
+        payload = {"date_from": day.isoformat(), "date_to": day.isoformat(), "kind": "day_off", "reason": reason}
         action = Action(intern_id=turn.intern.user.id, chat_id=turn.chat.id, message_id=turn.message_id, type="absence_request",
                         payload=payload, status="draft", approver_id=manager["id"],
                         result={"timeline": [{"status": "draft", "text": "Черновик"}], "approvers": [manager["id"], hrbp["id"]]})
@@ -325,18 +349,25 @@ class Orchestrator:
         person, note = ppl.pick_available(owner, chain)
         service = "сервис платежей (Billing)" if "billing" in path else "тестовые стенды и CI/CD" if "stands" in path else path
         text = f"За {service} отвечает **{owner['name']}** — указан владельцем `{path}` в CODEOWNERS."
+        message = None
+        if route.params.get("message_intent") == "code_review":
+            person, note = owner, None
+            text = f"Я не могу отправить сообщение за вас, но подготовил текст, который можно скопировать и написать {owner['name']}."
+            message = ppl.code_review_message(owner, task.title if task else None, route.params.get("timeframe"))
         if note:
             text += f"\n\n{note}"
         async for e in self._stream_text(text, out):
             yield e
-        for e in await self._doc_sources(turn.session, ("billing-readme", "structure") if "billing" in path else ("cicd", "structure"), out):
+        source_ids = (("review", "git-pr", "billing-readme") if route.params.get("message_intent") == "code_review"
+                      else ("billing-readme", "structure") if "billing" in path else ("cicd", "structure"))
+        for e in await self._doc_sources(turn.session, source_ids, out):
             yield e
         f = turn.subject.is_female
         out.meta["hint"] = tpl.g(f, "Разобралась", "Разобрался") + f", кто отвечает за {service}, и " + tpl.g(f, "подготовила", "подготовил") \
             + " вопрос владельцу."
         questions = ["Где в коде обрабатываются статусы платежа?", "Есть ли тестовые данные для возвратов?", "Кого ещё позвать на ревью?"] \
             if "billing" in path else []
-        msg = await ppl.broker_message(self.llm, person, turn.intern.user.name, f, short_topic(turn.text, 7), task.title if task else None)
+        msg = message or await ppl.broker_message(self.llm, person, turn.intern.user.name, f, short_topic(turn.text, 7), task.title if task else None)
         if not msg.get("questions"):
             msg["questions"] = questions
         others = [p for p in chain if p["id"] != person["id"]]
@@ -589,6 +620,19 @@ async def create_practice(session: AsyncSession, intern_id: str, topic: str, ste
 
 MONTHS = {"январ": 1, "феврал": 2, "марта": 3, "апрел": 4, "мая": 5, "июн": 6, "июл": 7, "август": 8, "сентябр": 9, "октябр": 10,
           "ноябр": 11, "декабр": 12}
+
+
+def _absence_reason(text: str) -> str | None:
+    value = re.sub(r"\d{1,2}\s+[а-я]+|\d{4}-\d{2}-\d{2}|\bзавтра\b|\bпослезавтра\b", " ", text, flags=re.IGNORECASE)
+    value = re.sub(
+        r"\b(?:создай|создать|оформи|оформить|подай|подать|составь|составить|заполни|заполнить|заявк\w*|отгул\w*|отпуск\w*|"
+        r"дат\w*|числ\w*|причин\w*|укажи|указать|напиши|напишите|пожалуйста|мне|на|по|для|с|и)\b",
+        " ",
+        value,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(r"[\s,.;:!?—–-]+", " ", value).strip()
+    return value or None
 
 
 def parse_day(text: str, today: date | None = None) -> date:
