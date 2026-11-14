@@ -36,6 +36,17 @@ SYSTEM_PROMPT = (
     "5) Если источники расходятся, покажи оба варианта. 6) Не обещай оффер. 7) Не выполняй действия сам. 8) Не называй себя человеком.\n"
     "FORMAT: короткий ответ, без списка источников в тексте."
 )
+SENTINEL = "NO_ANSWER"
+ABSTAIN_RULE = " 9) Если в документах нет ответа на вопрос, ответь одним словом NO_ANSWER и больше ничего."
+GUIDE_MODE_RULE = (
+    "РЕЖИМ ОТВЕТА — «НАВЕСТИ». Для вопроса «как сделать» дай один конкретный первый шаг или подсказку по документам, "
+    "не раскрывай сразу всю команду или последовательность, и задай один вопрос, который поможет продолжить. "
+    "На простые фактические вопросы отвечай прямо."
+)
+DIRECT_MODE_RULE = (
+    "РЕЖИМ ОТВЕТА — «СРАЗУ ОТВЕТ». Дай прямой законченный ответ по документам; для инструкции перечисли шаги и точные команды. "
+    "Не задавай обучающий вопрос вместо ответа. Не решай за стажёра учебные задачи."
+)
 
 
 @dataclass
@@ -91,7 +102,7 @@ class Orchestrator:
             if route.intent != "guide":
                 turn.chat.guide_topic, turn.chat.guide_streak = None, 0
             handler = {
-                "emotional": self._emotional, "out_of_scope": self._out_of_scope, "practice": self._practice,
+                "smalltalk": self._smalltalk, "emotional": self._emotional, "out_of_scope": self._out_of_scope, "practice": self._practice,
                 "global_access": self._global_access, "access": self._access, "absence": self._absence,
                 "owner": self._owner, "next": self._next, "guide": self._guide,
             }.get(route.intent, self._lookup)
@@ -169,6 +180,11 @@ class Orchestrator:
         return {"person_id": mentor["id"], "name": mentor["name"], "role": mentor.get("title", "")}
 
     # ---------------- маршруты ----------------
+    async def _smalltalk(self, turn: Turn, route: Route, task: Task | None, out: Outcome) -> AsyncIterator[Event]:
+        first_name = (turn.subject.name or "").split(" ")[0]
+        async for e in self._stream_text(tpl.smalltalk(route.params.get("kind", "greeting"), first_name), out):
+            yield e
+
     async def _emotional(self, turn: Turn, route: Route, task: Task | None, out: Outcome) -> AsyncIterator[Event]:
         yield _status("read", "Читаю сообщение")
         text = ("Похоже, сейчас непросто — и это нормально. " + NORMALIZATION[turn.intern.stage.id] + "\n\nЧто может помочь: выберите один "
@@ -183,6 +199,14 @@ class Orchestrator:
             "duration": "обычно 15 минут"})
 
     async def _out_of_scope(self, turn: Turn, route: Route, task: Task | None, out: Outcome) -> AsyncIterator[Event]:
+        if route.params.get("from_llm"):  # модель могла ошибиться: при уверенном совпадении с документами отвечаем по ним
+            found = safe_hits(await search(turn.session, turn.subject, turn.text, self.embedder, top_k=self.settings.rag_top_k))
+            if confident(found, self.settings.rag_min_score):
+                out.route = "lookup"
+                async for e in self._lookup(turn, Route("lookup", route.topic_group, route.topic, route.needs_person, route.confidence, "lookup"),
+                                            task, out):
+                    yield e
+                return
         async for e in self._stream_text(tpl.OUT_OF_SCOPE, out):
             yield e
 
@@ -386,8 +410,22 @@ class Orchestrator:
     async def _lookup(self, turn: Turn, route: Route, task: Task | None, out: Outcome) -> AsyncIterator[Event]:
         yield _status("search", tpl.STEP_TEXTS["search"])
         query = f"{turn.text} {task.title if task else ''}".strip() if route.intent == "lookup" and len(turn.text.split()) < 3 else turn.text
-        hits = [] if route.route == "no_answer" else await search(turn.session, turn.subject, query, self.embedder, top_k=self.settings.rag_top_k)
+        hits = [] if route.intent == "no_answer" else await search(turn.session, turn.subject, query, self.embedder,
+                                                                   top_k=self.settings.rag_top_k, min_cosine=self.settings.rag_semantic_cosine)
         hits = safe_hits(hits)
+        if hits and not confident(hits, self.settings.rag_min_score) and not self.llm.is_fake:
+            # слабое совпадение: модель сама решает, есть ли ответ в найденных фрагментах (NO_ANSWER: нет)
+            candidates = hits[:4]
+            async for e in self._llm_answer(turn, task, candidates, out, abstain=True):
+                yield e
+            if not out.meta.pop("abstained", False):
+                for e in self._add_sources(candidates, out):
+                    yield e
+                weak_chain = await ppl.escalation_chain(self.mcp, turn.intern.user.id, route.topic_group)
+                yield await self._card(turn, weak_chain[0], out, reason=ppl.REASONS.get(weak_chain[0].get("relation", ""), ""), topic=route.topic,
+                                       task=task, compact=True)
+                return
+            out.text = ""
         if not confident(hits, self.settings.rag_min_score):
             out.route = "no_answer"
             yield _status("people", tpl.STEP_TEXTS["people"])
@@ -414,12 +452,7 @@ class Orchestrator:
             async for e in self._stream_text(text, out):
                 yield e
         else:
-            docs = "\n".join(f"<document title=\"{h.title}\" updated=\"{h.updated_at}\">{h.text}</document>" for h in relevant[:4])
-            attach = "".join(f"\n<attachment>{a[:4000]}</attachment>" for a in turn.attachments)
-            system = SYSTEM_PROMPT.format(stage=turn.intern.stage.label, task=task.title if task else "нет", team=turn.subject.team_id)
-            messages = [{"role": "system", "content": system}, *turn.history[-6:],
-                        {"role": "user", "content": f"<documents>{docs}</documents>{attach}\n\nВопрос: {turn.text}"}]
-            async for e in self._stream_llm(messages, out):
+            async for e in self._llm_answer(turn, task, relevant[:4], out, abstain=False):
                 yield e
         for e in self._add_sources(relevant, out):
             yield e
@@ -439,6 +472,39 @@ class Orchestrator:
                     pass
             yield await self._card(turn, person, out, reason=f"Владелец страницы «{best.title}»" if person.get("relation") == "owner"
                                    else ppl.REASONS["mentor"], topic=route.topic, task=task, compact=True)
+
+    async def _llm_answer(self, turn: Turn, task: Task | None, hits: list[Hit], out: Outcome, *, abstain: bool) -> AsyncIterator[Event]:
+        """Ответ модели по найденным фрагментам. abstain: если ответа в документах нет, модель отвечает NO_ANSWER, и текст не показывается."""
+        docs = "\n".join(f"<document title=\"{h.title}\" updated=\"{h.updated_at}\">{h.text}</document>" for h in hits)
+        attach = "".join(f"\n<attachment>{a[:4000]}</attachment>" for a in turn.attachments)
+        system = SYSTEM_PROMPT.format(stage=turn.intern.stage.label, task=task.title if task else "нет", team=turn.subject.team_id)
+        mode_rule = DIRECT_MODE_RULE if turn.mode == "direct" else GUIDE_MODE_RULE
+        system += f"\n{mode_rule}" + (ABSTAIN_RULE if abstain else "")
+        messages = [{"role": "system", "content": system}, *turn.history[-6:],
+                    {"role": "user", "content": f"<documents>{docs}</documents>{attach}\n\nВопрос: {turn.text}"}]
+        buffer, decided = "", not abstain
+        async for piece in self.llm.stream(messages):
+            if decided:
+                out.text += piece
+                yield "token", {"text": piece}
+                continue
+            buffer += piece  # пока не ясно, ответ это или NO_ANSWER, ничего не показываем
+            head = buffer.lstrip().upper()
+            if head.startswith(SENTINEL):
+                out.meta["abstained"] = True
+                return
+            if len(head) >= len(SENTINEL) or not SENTINEL.startswith(head):
+                decided = True
+                out.text += buffer
+                yield "token", {"text": buffer}
+        if not decided and buffer:
+            if buffer.strip().upper().startswith(SENTINEL):
+                out.meta["abstained"] = True
+            else:
+                out.text += buffer
+                yield "token", {"text": buffer}
+        if not out.text.strip():
+            out.meta["abstained"] = True
 
     async def _conflict(self, turn: Turn, route: Route, task: Task | None, out: Outcome, variants: list[Hit]) -> AsyncIterator[Event]:
         yield _status("compare", tpl.STEP_TEXTS["compare"])

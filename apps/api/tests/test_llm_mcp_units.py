@@ -100,6 +100,11 @@ async def test_provider_factory_switches_by_config(monkeypatch):
     assert isinstance(get_llm(), OpenAICompatibleLLM) and isinstance(get_embedder(), OpenAICompatibleEmbedder)
     set_llm(None)
     set_embedder(None)
+    monkeypatch.setattr(get_settings(), "embeddings_provider", "hash")
+    assert isinstance(get_embedder(), HashEmbedder)
+    set_llm(None)
+    set_embedder(None)
+    monkeypatch.setattr(get_settings(), "embeddings_provider", None)
     monkeypatch.setattr(get_settings(), "llm_provider", "fake")
     assert isinstance(get_llm(), FakeLLM) and isinstance(get_embedder(), HashEmbedder)
     assert await FakeLLM().complete([], json_mode=True) == "{}"
@@ -227,7 +232,7 @@ async def test_real_mode_lookup_uses_llm_stream(api):
 
 
 def test_text_retrieval_helpers():
-    assert query_stems("Как получить доступ к тестовому стенду?") == ["досту", "тесто", "стенд"]
+    assert query_stems("Как получить доступ к тестовому стенду?") == ["доступ", "тестов", "стенд"]
     assert short_topic("Как создать новую dev-ветку в репозитории проекта?", 3) == "Как создать новую…"
     long = "Первое предложение достаточно длинное, чтобы обрезать. " * 20
     assert first_sentences(long, 120).endswith(".")

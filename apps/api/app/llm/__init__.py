@@ -27,10 +27,13 @@ def get_embedder() -> Embedder:
     global _embedder
     if _embedder is None:
         s = get_settings()
-        if s.llm_provider == "openai_compatible":
+        provider = s.embeddings_provider or s.llm_provider
+        if provider == "openai_compatible":
             _embedder = OpenAICompatibleEmbedder(s.llm_base_url, s.llm_api_key, s.embeddings_model, s.llm_timeout_seconds)
-        else:
+        elif provider in ("hash", "fake"):
             _embedder = HashEmbedder()
+        else:
+            raise ValueError(f"Unsupported embeddings provider: {provider}")
     return _embedder
 
 
