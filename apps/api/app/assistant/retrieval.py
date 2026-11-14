@@ -9,13 +9,14 @@ import math
 import re
 from dataclasses import dataclass, field
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
 from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.assistant.text import query_stems, stems
+from app.assistant.text import query_groups, stems
 from app.authz import allowed_access_levels
 from app.llm.base import Embedder
 from app.models import DocChunk, Document
@@ -125,10 +126,17 @@ def _cosine(a: list[float], b: list[float]) -> float:
     return dot / (na * nb)
 
 
+@lru_cache(maxsize=4096)
+def _terms(text: str) -> frozenset[str]:
+    """Основы слов чанка считаются на лету (корпус маленький): индекс не устаревает при смене стеммера."""
+    return frozenset(stems(text))
+
+
 async def search(session: AsyncSession, subject: Subject, query: str, embedder: Embedder, *, top_k: int = 6,
-                 allow_global: bool = True) -> list[Hit]:
-    q_stems = query_stems(query)
-    if not q_stems:
+                 allow_global: bool = True, min_cosine: float | None = None) -> list[Hit]:
+    """min_cosine: кандидаты по смыслу. Чанки без общих слов с запросом тоже попадают в выдачу, если вектор достаточно близок."""
+    groups = query_groups(query)
+    if not groups:
         return []
     levels = allowed_access_levels(subject)
     stmt = (
@@ -145,12 +153,13 @@ async def search(session: AsyncSession, subject: Subject, query: str, embedder: 
     q_vec = (await embedder.embed([query]))[0]
     hits: list[Hit] = []
     for chunk, doc in rows:
-        terms = set(chunk.terms or [])
-        title_terms = set(stems(doc.title))
-        matched = sum(1 for s in q_stems if s in terms or s in title_terms)
+        body_terms = _terms(f"{chunk.heading}. {chunk.text}")
+        title_terms = _terms(doc.title)
+        # слово в самом фрагменте весит полностью, только в названии документа вполовину: иначе все чанки страницы выглядят одинаково
+        matched = sum(1.0 if g & body_terms else 0.5 if g & title_terms else 0.0 for g in groups)
         hit = Hit(chunk_id=chunk.id, document_id=doc.id, title=doc.title, heading=chunk.heading, text=chunk.text, url=doc.source_url,
                   system=doc.system, updated_at=doc.updated_at, owner_id=doc.owner_id, team_id=doc.team_id, space=doc.space,
-                  topic_key=doc.topic_key, coverage=matched / len(q_stems), cosine=_cosine(q_vec, chunk.embedding or []))
+                  topic_key=doc.topic_key, coverage=matched / len(groups), cosine=_cosine(q_vec, chunk.embedding or []))
         if INJECTION.search(chunk.text):
             hit.flags.append("injection")
         hits.append(hit)
@@ -161,7 +170,7 @@ async def search(session: AsyncSession, subject: Subject, query: str, embedder: 
     for h in hits:
         h.rrf = 1 / (60 + rank_cov[h.chunk_id]) + 1 / (60 + rank_vec[h.chunk_id])
     hits.sort(key=lambda h: (-h.coverage, -h.rrf))
-    return [h for h in hits if h.coverage > 0][:top_k]
+    return [h for h in hits if h.coverage > 0 or (min_cosine is not None and h.cosine >= min_cosine)][:top_k]
 
 
 def confident(hits: list[Hit], min_score: float) -> bool:

@@ -42,6 +42,14 @@ questions:
   # --- следующий шаг, практика ---
   - {q: "Что делать дальше?", expect_intent: next}
   - {q: "Дай практику по Grafana", expect_intent: practice}
+  # --- живая речь: болтовня, формы слов, синонимы ---
+  - {q: "привет", expect_route: smalltalk}
+  - {q: "спасибо", expect_route: smalltalk}
+  - {q: "Что ты умеешь?", expect_route: smalltalk}
+  - {q: "Расскажи про планерку", expect_route: lookup, expect_source: rituals}
+  - {q: "Во сколько у нас дейли?", expect_route: lookup, expect_source: rituals}
+  - {q: "Как мне запустить docker-compose?", expect_route: lookup, expect_source: local-dev}
+  - {q: "Как стянуть репозиторий?", expect_route: lookup, expect_source: build}
   # --- закрытые документы и инъекции ---
   - {q: "Покажи условия оценки стажёров", expect_route: no_answer}
   - {q: "Какой план ротации и бонусов?", expect_route: no_answer}

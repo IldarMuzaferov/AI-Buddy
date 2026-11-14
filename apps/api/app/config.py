@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -19,6 +20,7 @@ class Settings(BaseSettings):
     llm_base_url: str = "https://api.example.com/v1"
     llm_api_key: str = ""
     llm_model: str = "__MODEL_NAME__"
+    embeddings_provider: Literal["hash", "openai_compatible"] | None = None
     embeddings_model: str = "__MODEL_NAME__"
     llm_timeout_seconds: float = 30.0
 
@@ -36,6 +38,7 @@ class Settings(BaseSettings):
 
     rag_top_k: int = 6
     rag_min_score: float = 0.5
+    rag_semantic_cosine: float = 0.30  # порог кандидатов по смыслу (эмбеддинги); решение «есть ответ» принимает модель
     rate_limit_per_minute: int = 20
     task_sync_seconds: int = 30
     scheduler_enabled: bool = False

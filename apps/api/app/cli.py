@@ -54,7 +54,9 @@ async def check_llm() -> int:
     from app.llm import get_embedder, get_llm
 
     s = get_settings()
-    print(f"LLM_PROVIDER={s.llm_provider} LLM_MODEL={s.llm_model} EMBEDDINGS_MODEL={s.embeddings_model}")
+    embeddings_provider = s.embeddings_provider or s.llm_provider
+    print(f"LLM_PROVIDER={s.llm_provider} LLM_MODEL={s.llm_model} "
+          f"EMBEDDINGS_PROVIDER={embeddings_provider} EMBEDDINGS_MODEL={s.embeddings_model}")
     llm = get_llm()
     if llm.is_fake:
         print("Режим fake: внешний провайдер не используется. Для проверки ключа задайте LLM_PROVIDER=openai_compatible.")

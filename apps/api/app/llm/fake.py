@@ -5,7 +5,7 @@ import hashlib
 import math
 from collections.abc import AsyncIterator
 
-from app.assistant.text import stems
+from app.assistant.text import light_stems
 
 
 class FakeLLM:
@@ -31,7 +31,7 @@ class HashEmbedder:
 
     def _one(self, text: str) -> list[float]:
         vec = [0.0] * self.dim
-        for stem in stems(text):
+        for stem in light_stems(text):
             idx = int(hashlib.md5(stem.encode("utf-8")).hexdigest(), 16) % self.dim
             vec[idx] += 1.0
         norm = math.sqrt(sum(v * v for v in vec)) or 1.0

@@ -28,11 +28,13 @@ docker compose up --build
 | `LLM_BASE_URL` | Например, `https://api.openai.com/v1` или внутренний шлюз |
 | `LLM_API_KEY` | Ключ провайдера (в репозиторий не коммитится, только в `.env`) |
 | `LLM_MODEL` | Модель для ответов (chat completions) |
-| `EMBEDDINGS_MODEL` | Модель эмбеддингов (`/embeddings`) |
+| `EMBEDDINGS_PROVIDER` | Необязательно: `hash` — локальные эмбеддинги без запросов к API; `openai_compatible` — API провайдера. По умолчанию совпадает с `LLM_PROVIDER` |
+| `EMBEDDINGS_MODEL` | Модель эмбеддингов (`/embeddings`), если `EMBEDDINGS_PROVIDER=openai_compatible` |
 
 Проверка подключения: `make check-llm` (или `docker compose exec api python -m app.cli check-llm`).
 Без ключа оставьте `LLM_PROVIDER=fake`: все сценарии S1–S5 и J проходят на детерминированных ответах.
-При смене провайдера эмбеддингов переиндексируйте вики: `docker compose exec api python -m app.cli reindex`.
+При смене провайдера или модели эмбеддингов переиндексируйте вики: `docker compose exec api python -m app.cli reindex`.
+Если у API эмбеддингов исчерпан лимит, задайте `EMBEDDINGS_PROVIDER=hash` и переиндексируйте: ответы по-прежнему будут генерироваться через `LLM_PROVIDER`, а поиск будет использовать локальные лексические эмбеддинги.
 
 ## Порядок проверки сценариев (через /docs или фронтенд)
 
