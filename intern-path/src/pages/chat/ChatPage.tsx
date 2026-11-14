@@ -1,16 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import Markdown from "react-markdown";
-import { useApi, useData, useUpdate } from "@/entities/session/api/client";
-import { Composer } from "@/features/assistant/Composer";
-import { useStream } from "@/features/assistant/useAssistant";
-import { Dialog, ErrorText, Icon, QueryState } from "@/shared/ui/common";
-import { useNavigation } from "@/shared/ui/navigation";
-import { TaskSummary } from "@/widgets/shell/TaskSummary";
-import {
-  Block,
-  MessageRow,
-  Sources,
-} from "@/widgets/conversation/MessageContent";
+import { useEffect, useRef, useState } from 'react';
+import Markdown from 'react-markdown';
+import { useApi, useData, useUpdate } from '@/entities/session/api/client';
+import { Composer } from '@/features/assistant/Composer';
+import { useStream } from '@/features/assistant/useAssistant';
+import { Dialog, ErrorText, Icon, QueryState } from '@/shared/ui/common';
+import { useNavigation } from '@/shared/ui/navigation';
+import { TaskSummary } from '@/widgets/shell/TaskSummary';
+import { Block, MessageRow, Sources } from '@/widgets/conversation/MessageContent';
 
 function LiveAnswer({ id }: { id: string }) {
   const stream = useStream();
@@ -26,23 +22,17 @@ function LiveAnswer({ id }: { id: string }) {
         )}
       </>
     );
-  const status = stream.events.filter((event) => event.name === "status");
+  const status = stream.events.filter((event) => event.name === 'status');
   const answer = stream.events
-    .flatMap((event) => (event.name === "token" ? [event.data.text] : []))
-    .join("");
-  const sources = stream.events.flatMap((event) =>
-    event.name === "source" ? [event.data] : [],
-  );
+    .flatMap((event) => (event.name === 'token' ? [event.data.text] : []))
+    .join('');
+  const sources = stream.events.flatMap((event) => (event.name === 'source' ? [event.data] : []));
   return (
     <div aria-live="polite">
       {(stream.question || stream.filename) && (
         <div className="msg-user">
-          {stream.filename && (
-            <span className="file-chip">{stream.filename}</span>
-          )}
-          {stream.question && (
-            <div className="bubble pre-line">{stream.question}</div>
-          )}
+          {stream.filename && <span className="file-chip">{stream.filename}</span>}
+          {stream.question && <div className="bubble pre-line">{stream.question}</div>}
         </div>
       )}
       <div className="msg-ai">
@@ -50,28 +40,22 @@ function LiveAnswer({ id }: { id: string }) {
           <Icon name="spark" />
         </div>
         <div>
-          <p className="muted">
-            {status.at(-1)?.data.text ?? "Отправляю вопрос…"}
-          </p>
+          <p className="muted">{status.at(-1)?.data.text ?? 'Отправляю вопрос…'}</p>
           <div className="answer-text">
             <Markdown>{answer}</Markdown>
           </div>
           {sources.length > 0 && <Sources items={sources} />}
           {stream.events.map((event, index) =>
             [
-              "person_card",
-              "action_draft",
-              "conflict",
-              "practice",
-              "next_step",
-              "notice",
-              "error",
+              'person_card',
+              'action_draft',
+              'conflict',
+              'practice',
+              'next_step',
+              'notice',
+              'error',
             ].includes(event.name) ? (
-              <Block
-                key={index}
-                value={{ type: event.name, ...event.data }}
-                chatId={id}
-              />
+              <Block key={index} value={{ type: event.name, ...event.data }} chatId={id} />
             ) : null,
           )}
         </div>
@@ -82,34 +66,26 @@ function LiveAnswer({ id }: { id: string }) {
 
 export function ChatPage({ id }: { id: string }) {
   const api = useApi(),
-    chat = useData(["chat", id], () => api.chats.messages(id)),
+    chat = useData(['chat', id], () => api.chats.messages(id)),
     update = useUpdate(),
     go = useNavigation((state) => state.go);
   const stream = useStream(),
     end = useRef<HTMLDivElement>(null),
     followedChat = useRef<string>(null);
   const [rename, setRename] = useState(false),
-    [title, setTitle] = useState("");
+    [title, setTitle] = useState('');
   useEffect(() => {
     if (!chat.data && !stream.pending) return;
-    const container = end.current?.closest(".content");
+    const container = end.current?.closest('.content');
     if (
       followedChat.current !== id ||
       stream.pending ||
-      (container &&
-        container.scrollHeight - container.scrollTop - container.clientHeight <
-          270)
+      (container && container.scrollHeight - container.scrollTop - container.clientHeight < 270)
     ) {
-      end.current?.scrollIntoView({ block: "end" });
+      end.current?.scrollIntoView({ block: 'end' });
       followedChat.current = id;
     }
-  }, [
-    id,
-    chat.data?.messages.length,
-    stream.events.length,
-    stream.pending,
-    chat.data,
-  ]);
+  }, [id, chat.data?.messages.length, stream.events.length, stream.pending, chat.data]);
   return (
     <div className="chat-page page">
       {chat.data ? (
@@ -122,7 +98,7 @@ export function ChatPage({ id }: { id: string }) {
                 aria-label="Переименовать чат"
                 disabled={update.isPending || stream.pending}
                 onClick={() => {
-                  setTitle(chat.data?.chat.title ?? "");
+                  setTitle(chat.data?.chat.title ?? '');
                   setRename(true);
                 }}
               >
@@ -133,10 +109,10 @@ export function ChatPage({ id }: { id: string }) {
                 aria-label="Удалить чат"
                 disabled={update.isPending || stream.pending}
                 onClick={() => {
-                  if (window.confirm("Удалить чат и его вложения?"))
+                  if (window.confirm('Удалить чат и его вложения?'))
                     update.mutate(async () => {
                       await api.chats.remove(id);
-                      go({ page: "home" });
+                      go({ page: 'home' });
                     });
                 }}
               >
@@ -165,27 +141,18 @@ export function ChatPage({ id }: { id: string }) {
             {chat.data.messages
               .filter((message) => {
                 if (stream.chatId !== id || !stream.pending) return true;
-                const completed = stream.events.find(
-                  (event) => event.name === "done",
-                );
+                const completed = stream.events.find((event) => event.name === 'done');
                 if (completed?.data.message_id === message.id) return false;
                 const index = chat.data?.messages.indexOf(message);
-                const next =
-                  index === undefined
-                    ? undefined
-                    : chat.data?.messages[index + 1];
+                const next = index === undefined ? undefined : chat.data?.messages[index + 1];
                 return !(
-                  message.role === "user" &&
+                  message.role === 'user' &&
                   next?.id === completed?.data.message_id &&
                   message.content === stream.question
                 );
               })
               .map((message) => (
-                <MessageRow
-                  key={message.id}
-                  message={message}
-                  locked={chat.data?.task?.locked}
-                />
+                <MessageRow key={message.id} message={message} locked={chat.data?.task?.locked} />
               ))}
           </div>
         </>
@@ -195,11 +162,7 @@ export function ChatPage({ id }: { id: string }) {
       <LiveAnswer id={id} />
       {chat.data && (
         <div className="chat-compose">
-          <Composer
-            chatId={id}
-            initialMode={chat.data.chat.mode}
-            locked={chat.data.task?.locked}
-          />
+          <Composer chatId={id} initialMode={chat.data.chat.mode} locked={chat.data.task?.locked} />
         </div>
       )}
       <div ref={end} />

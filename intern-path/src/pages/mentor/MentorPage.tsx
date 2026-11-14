@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useApi, useData, useUpdate } from "@/entities/session/api/client";
-import { ApiError } from "@/shared/api/transport";
+import { useState } from 'react';
+import { useApi, useData, useUpdate } from '@/entities/session/api/client';
+import { ApiError } from '@/shared/api/transport';
 import {
   Avatar,
   Badge,
@@ -12,14 +12,14 @@ import {
   QueryState,
   taskColors,
   taskLabels,
-} from "@/shared/ui/common";
+} from '@/shared/ui/common';
 
 export function MentorPage() {
   const api = useApi(),
-    interns = useData(["interns"], api.mentor.interns),
+    interns = useData(['interns'], api.mentor.interns),
     update = useUpdate();
   const [creating, setCreating] = useState<{ id: string; name: string }>(),
-    [denial, setDenial] = useState("");
+    [denial, setDenial] = useState('');
   return (
     <div className="page">
       <h1>Мои стажёры</h1>
@@ -35,13 +35,11 @@ export function MentorPage() {
                   <span>
                     <strong>{card.intern.name}</strong>
                     <small>
-                      {card.intern.team} · {card.intern.stage.label} · день{" "}
-                      {card.intern.day} из {card.intern.total_days}
+                      {card.intern.team} · {card.intern.stage.label} · день {card.intern.day} из{' '}
+                      {card.intern.total_days}
                     </small>
                   </span>
-                  {card.is_absent_today && (
-                    <Badge color="wait">Сегодня в отгуле</Badge>
-                  )}
+                  {card.is_absent_today && <Badge color="wait">Сегодня в отгуле</Badge>}
                   <button
                     className="btn primary"
                     onClick={() => {
@@ -71,7 +69,7 @@ export function MentorPage() {
                       {card.checklist.current_stage.map((step) => (
                         <li key={step.id}>
                           <span>{step.title}</span>
-                          {step.status === "done" && <Icon name="check" />}
+                          {step.status === 'done' && <Icon name="check" />}
                         </li>
                       ))}
                     </ul>
@@ -100,14 +98,12 @@ export function MentorPage() {
                     <ul>
                       {card.access_requests.map((item) => (
                         <li key={item.id}>
-                          {item.number} · {item.project_key} · {item.level} ·{" "}
-                          {item.status}
+                          {item.number} · {item.project_key} · {item.level} · {item.status}
                         </li>
                       ))}
                       {card.absences.map((item) => (
                         <li key={item.id}>
-                          {item.number} · {dateLabel(item.date_from)} ·{" "}
-                          {item.status}
+                          {item.number} · {dateLabel(item.date_from)} · {item.status}
                         </li>
                       ))}
                       {card.doc_issues.map((item) => (
@@ -140,7 +136,7 @@ export function MentorPage() {
                     </section>
                   )}
                 </div>
-                {card.chats_access === "denied" && (
+                {card.chats_access === 'denied' && (
                   <div className="lockline">
                     <Icon name="lock" />
                     Чаты и вопросы доступны только стажёру.
@@ -159,10 +155,10 @@ export function MentorPage() {
             update.mutate(async () => {
               try {
                 await api.chats.list();
-                setDenial("API вернул данные.");
+                setDenial('API вернул данные.');
               } catch (error) {
                 if (error instanceof ApiError && error.status === 403)
-                  setDenial("403 · Чаты доступны только стажёру.");
+                  setDenial('403 · Чаты доступны только стажёру.');
                 else throw error;
               }
             })
@@ -173,10 +169,7 @@ export function MentorPage() {
         {denial && <p role="status">{denial}</p>}
       </section>
       {creating && (
-        <Dialog
-          title={`Задача для ${creating.name}`}
-          onClose={() => setCreating(undefined)}
-        >
+        <Dialog title={`Задача для ${creating.name}`} onClose={() => setCreating(undefined)}>
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -184,9 +177,9 @@ export function MentorPage() {
               update.mutate(async () => {
                 await api.mentor.createTask({
                   intern_id: creating.id,
-                  title: formText(form, "title"),
-                  description: formText(form, "description"),
-                  deadline: formText(form, "deadline"),
+                  title: formText(form, 'title'),
+                  description: formText(form, 'description'),
+                  deadline: formText(form, 'deadline'),
                 });
                 setCreating(undefined);
               });

@@ -1,11 +1,11 @@
-import { useApi, useData, useUpdate } from "@/entities/session/api/client";
-import { ErrorText, Icon, QueryState } from "@/shared/ui/common";
-import { useNavigation } from "@/shared/ui/navigation";
-import { TaskSummary } from "@/widgets/shell/TaskSummary";
+import { useApi, useData, useUpdate } from '@/entities/session/api/client';
+import { ErrorText, Icon, QueryState } from '@/shared/ui/common';
+import { useNavigation } from '@/shared/ui/navigation';
+import { TaskSummary } from '@/widgets/shell/TaskSummary';
 
 export function TaskPage({ id }: { id: string }) {
   const api = useApi(),
-    task = useData(["task", id], () => api.tasks.get(id)),
+    task = useData(['task', id], () => api.tasks.get(id)),
     update = useUpdate(),
     go = useNavigation((state) => state.go);
   return (
@@ -23,13 +23,11 @@ export function TaskPage({ id }: { id: string }) {
               <h2>Чаты задачи</h2>
               <button
                 className="btn primary"
-                disabled={
-                  data.locked || !data.can_create_chat || update.isPending
-                }
+                disabled={data.locked || !data.can_create_chat || update.isPending}
                 onClick={() =>
                   update.mutate(async () => {
                     const chat = await api.chats.create({ task_id: id });
-                    go({ page: "chat", id: chat.id });
+                    go({ page: 'chat', id: chat.id });
                   })
                 }
               >
@@ -42,7 +40,7 @@ export function TaskPage({ id }: { id: string }) {
                 <button
                   className="sb-link"
                   key={chat.id}
-                  onClick={() => go({ page: "chat", id: chat.id })}
+                  onClick={() => go({ page: 'chat', id: chat.id })}
                 >
                   <Icon name="chat" />
                   {chat.title}
@@ -60,7 +58,7 @@ export function TaskPage({ id }: { id: string }) {
 }
 export function TasksPage() {
   const api = useApi(),
-    tasks = useData(["tasks"], api.tasks.list),
+    tasks = useData(['tasks'], api.tasks.list),
     go = useNavigation((state) => state.go);
   return (
     <div className="page">
@@ -71,10 +69,7 @@ export function TasksPage() {
             items.map((task) => (
               <div key={task.id}>
                 <TaskSummary task={task} />
-                <button
-                  className="btn small"
-                  onClick={() => go({ page: "task", id: task.id })}
-                >
+                <button className="btn small" onClick={() => go({ page: 'task', id: task.id })}>
                   Открыть папку
                 </button>
               </div>

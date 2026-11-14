@@ -1,18 +1,18 @@
 @font-face {
   font-family: AvitoText;
-  src: url("/assets/avito-1.woff2") format("woff2");
+  src: url('/assets/avito-1.woff2') format('woff2');
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
   font-family: AvitoText;
-  src: url("/assets/avito-2.woff2") format("woff2");
+  src: url('/assets/avito-2.woff2') format('woff2');
   font-weight: 500 600;
   font-display: swap;
 }
 @font-face {
   font-family: AvitoDisplay;
-  src: url("/assets/avito-3.woff2") format("woff2");
+  src: url('/assets/avito-3.woff2') format('woff2');
   font-weight: 700;
   font-display: swap;
 }
@@ -560,7 +560,7 @@ p {
 .sb-row:hover .icon-button,
 .sb-row.cur .icon-button,
 .sb-row .icon-button:focus-visible,
-.sb-row .icon-button[aria-expanded="true"] {
+.sb-row .icon-button[aria-expanded='true'] {
   opacity: 1;
 }
 .sb-row .icon-button .icon {
@@ -1227,7 +1227,7 @@ p {
   align-items: center;
   gap: 6px;
 }
-.segmented button[aria-pressed="true"] {
+.segmented button[aria-pressed='true'] {
   background: #fff;
   color: var(--ink);
   box-shadow: 0 2px 6px #00000012;
@@ -1513,7 +1513,7 @@ p {
   width: 15px;
   height: 15px;
 }
-.ghost[aria-pressed="true"] {
+.ghost[aria-pressed='true'] {
   color: var(--ink);
   background: #f0f0f0;
 }
@@ -1668,7 +1668,7 @@ p {
   color: #999;
 }
 .chain li + li:before {
-  content: "→";
+  content: '→';
   color: #bbb;
   margin: 0 4px 0 -2px;
 }
@@ -1841,7 +1841,7 @@ p {
   padding-bottom: 2px;
 }
 .flow-steps li:after {
-  content: "";
+  content: '';
   position: absolute;
   width: 12px;
   height: 1px;

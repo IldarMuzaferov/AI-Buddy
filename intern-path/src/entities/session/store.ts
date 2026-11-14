@@ -1,8 +1,8 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { Profile } from "@/shared/api/contracts";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { Profile } from '@/shared/api/contracts';
 
-export type BackendMode = "mock" | "server";
+export type BackendMode = 'mock' | 'server';
 interface SessionState {
   backend: BackendMode;
   token: string | null;
@@ -15,7 +15,7 @@ interface SessionState {
 export const useSession = create<SessionState>()(
   persist(
     (set) => ({
-      backend: import.meta.env?.VITE_API_MODE === "server" ? "server" : "mock",
+      backend: import.meta.env?.VITE_API_MODE === 'server' ? 'server' : 'mock',
       token: null,
       user: null,
       changeBackend: (backend) => set({ backend, token: null, user: null }),
@@ -23,7 +23,7 @@ export const useSession = create<SessionState>()(
       signOut: () => set({ token: null, user: null }),
     }),
     {
-      name: "intern-path-session-v1",
+      name: 'intern-path-session-v1',
       partialize: ({ backend }) => ({ backend }),
     },
   ),

@@ -1,27 +1,19 @@
-import { useMutation } from "@tanstack/react-query";
-import { useApi, useData } from "@/entities/session/api/client";
-import { useSession } from "@/entities/session/store";
-import {
-  Avatar,
-  ErrorText,
-  Hero,
-  Icon,
-  PROJECT_NAME,
-  QueryState,
-} from "@/shared/ui/common";
+import { useMutation } from '@tanstack/react-query';
+import { useApi, useData } from '@/entities/session/api/client';
+import { useSession } from '@/entities/session/store';
+import { Avatar, ErrorText, Hero, Icon, PROJECT_NAME, QueryState } from '@/shared/ui/common';
 
-import { BackendSwitch } from "@/entities/session/BackendSwitch";
+import { BackendSwitch } from '@/entities/session/BackendSwitch';
 
 export function LoginPage() {
   const api = useApi(),
     signIn = useSession((state) => state.signIn),
     backend = useSession((state) => state.backend);
-  const users = useData(["users"], api.auth.users);
+  const users = useData(['users'], api.auth.users);
   const login = useMutation({
     mutationFn: api.auth.login,
     onSuccess: (session) => {
-      if (useSession.getState().backend === backend)
-        signIn(session.access_token, session.user);
+      if (useSession.getState().backend === backend) signIn(session.access_token, session.user);
     },
   });
   return (
@@ -37,9 +29,7 @@ export function LoginPage() {
             <h1>
               Кто вы сегодня<span className="blue-period">?</span>
             </h1>
-            <p className="lead">
-              Выберите тестового пользователя. Права и экраны зависят от роли.
-            </p>
+            <p className="lead">Выберите тестового пользователя. Права и экраны зависят от роли.</p>
           </div>
           <Hero />
         </section>
@@ -57,23 +47,19 @@ export function LoginPage() {
                   <Avatar
                     name={user.name}
                     size="lg"
-                    color={
-                      user.id === "dima" || user.id === "maria"
-                        ? "blue"
-                        : "purple"
-                    }
+                    color={user.id === 'dima' || user.id === 'maria' ? 'blue' : 'purple'}
                   />
                   <span>
                     <strong>{user.name}</strong>
                     <small>{user.title}</small>
                     <small>
-                      {user.id === "anya"
-                        ? "День 12 · основной сценарий"
-                        : user.id === "dima"
-                          ? "День 4 · сегодня в отгуле"
-                          : user.role === "lead"
-                            ? "Экран лида не предусмотрен"
-                            : "Прогресс, задачи и заявки"}
+                      {user.id === 'anya'
+                        ? 'День 12 · основной сценарий'
+                        : user.id === 'dima'
+                          ? 'День 4 · сегодня в отгуле'
+                          : user.role === 'lead'
+                            ? 'Экран лида не предусмотрен'
+                            : 'Прогресс, задачи и заявки'}
                     </small>
                   </span>
                   {user.can_login && <Icon name="arrow" />}

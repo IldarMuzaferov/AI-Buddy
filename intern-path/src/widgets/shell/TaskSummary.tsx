@@ -1,11 +1,5 @@
-import type { Task } from "@/shared/api/contracts";
-import {
-  Badge,
-  dateLabel,
-  Icon,
-  taskColors,
-  taskLabels,
-} from "@/shared/ui/common";
+import type { Task } from '@/shared/api/contracts';
+import { Badge, dateLabel, Icon, taskColors, taskLabels } from '@/shared/ui/common';
 
 export function TaskSummary({ task }: { task: Task }) {
   return (

@@ -1,29 +1,20 @@
-import { useState } from "react";
-import { useApi, useData, useUpdate } from "@/entities/session/api/client";
-import type { Profile, TaskStatus } from "@/shared/api/contracts";
-import {
-  ErrorText,
-  formText,
-  QueryState,
-  taskLabels,
-} from "@/shared/ui/common";
+import { useState } from 'react';
+import { useApi, useData, useUpdate } from '@/entities/session/api/client';
+import type { Profile, TaskStatus } from '@/shared/api/contracts';
+import { ErrorText, formText, QueryState, taskLabels } from '@/shared/ui/common';
 
 function DevTools({ user }: { user: Profile }) {
   const api = useApi(),
     update = useUpdate();
-  const [output, setOutput] = useState("");
-  const defaultIntern = user.role === "intern" ? user.id : "anya";
+  const [output, setOutput] = useState('');
+  const defaultIntern = user.role === 'intern' ? user.id : 'anya';
   const run = (operation: () => Promise<unknown>) =>
     update.mutate(async () => {
-      setOutput("");
-      setOutput(JSON.stringify(await operation(), null, 2) ?? "Выполнено");
+      setOutput('');
+      setOutput(JSON.stringify(await operation(), null, 2) ?? 'Выполнено');
     });
-  const tasks = useData(["tasks"], api.tasks.list, user.role === "intern");
-  const actions = useData(
-    ["actions", undefined],
-    () => api.actions.list(),
-    user.role === "intern",
-  );
+  const tasks = useData(['tasks'], api.tasks.list, user.role === 'intern');
+  const actions = useData(['actions', undefined], () => api.actions.list(), user.role === 'intern');
   return (
     <section className="panel">
       <h2>Dev-панель</h2>
@@ -35,10 +26,10 @@ function DevTools({ user }: { user: Profile }) {
             const form = new FormData(event.currentTarget);
             run(() =>
               api.dev.createTask({
-                intern_id: formText(form, "intern"),
-                title: formText(form, "title"),
-                description: formText(form, "description") || undefined,
-                deadline: formText(form, "deadline") || undefined,
+                intern_id: formText(form, 'intern'),
+                title: formText(form, 'title'),
+                description: formText(form, 'description') || undefined,
+                deadline: formText(form, 'deadline') || undefined,
               }),
             );
           }}
@@ -70,16 +61,14 @@ function DevTools({ user }: { user: Profile }) {
           onSubmit={(event) => {
             event.preventDefault();
             const form = new FormData(event.currentTarget),
-              status = formText(form, "status");
+              status = formText(form, 'status');
             run(() =>
               api.dev.updateTask({
-                task_id: formText(form, "task"),
+                task_id: formText(form, 'task'),
                 status: status ? (status as TaskStatus) : undefined,
-                deadline: formText(form, "deadline") || undefined,
-                description: formText(form, "description") || undefined,
-                shift_days: formText(form, "shift")
-                  ? Number(formText(form, "shift"))
-                  : undefined,
+                deadline: formText(form, 'deadline') || undefined,
+                description: formText(form, 'description') || undefined,
+                shift_days: formText(form, 'shift') ? Number(formText(form, 'shift')) : undefined,
               }),
             );
           }}
@@ -130,11 +119,11 @@ function DevTools({ user }: { user: Profile }) {
               event.nativeEvent instanceof SubmitEvent &&
               event.nativeEvent.submitter instanceof HTMLButtonElement
                 ? event.nativeEvent.submitter.value
-                : "approve";
-            const id = formText(form, "id");
+                : 'approve';
+            const id = formText(form, 'id');
             run(() =>
-              operation === "reject"
-                ? api.dev.reject(id, formText(form, "reason") || undefined)
+              operation === 'reject'
+                ? api.dev.reject(id, formText(form, 'reason') || undefined)
                 : api.dev.approve(id),
             );
           }}
@@ -146,7 +135,7 @@ function DevTools({ user }: { user: Profile }) {
           </label>
           <datalist id="dev-actions">
             {actions.data
-              ?.filter((action) => action.external_status === "pending")
+              ?.filter((action) => action.external_status === 'pending')
               .map((action) => (
                 <option key={action.id} value={action.id}>
                   {action.external_id}
@@ -171,12 +160,7 @@ function DevTools({ user }: { user: Profile }) {
           onSubmit={(event) => {
             event.preventDefault();
             const form = new FormData(event.currentTarget);
-            run(() =>
-              api.dev.advance(
-                formText(form, "intern"),
-                Number(formText(form, "days")),
-              ),
-            );
+            run(() => api.dev.advance(formText(form, 'intern'), Number(formText(form, 'days'))));
           }}
         >
           <h3>Перемотать день стажировки</h3>
@@ -194,16 +178,10 @@ function DevTools({ user }: { user: Profile }) {
           <button className="btn">Применить</button>
         </form>
         <div className="actions section-actions">
-          <button
-            className="btn"
-            onClick={() => run(() => api.dev.failNext(true))}
-          >
+          <button className="btn" onClick={() => run(() => api.dev.failNext(true))}>
             Ошибка следующего ответа
           </button>
-          <button
-            className="btn"
-            onClick={() => run(() => api.dev.failNext(false))}
-          >
+          <button className="btn" onClick={() => run(() => api.dev.failNext(false))}>
             Отключить ошибку
           </button>
           <button className="btn" onClick={() => run(api.dev.sync)}>
@@ -212,8 +190,7 @@ function DevTools({ user }: { user: Profile }) {
           <button
             className="btn"
             onClick={() => {
-              if (window.confirm("Сбросить все демо-данные?"))
-                run(api.dev.reset);
+              if (window.confirm('Сбросить все демо-данные?')) run(api.dev.reset);
             }}
           >
             Сбросить демо
@@ -231,19 +208,15 @@ function DevTools({ user }: { user: Profile }) {
 }
 export function ToolsPage({ user }: { user: Profile }) {
   const api = useApi(),
-    health = useData(["health"], api.system.health),
-    flags = useData(["flags"], api.system.flags);
+    health = useData(['health'], api.system.health),
+    flags = useData(['flags'], api.system.flags);
   const update = useUpdate(),
-    [output, setOutput] = useState("");
+    [output, setOutput] = useState('');
   const run = (operation: () => Promise<unknown>) =>
     update.mutate(async () => {
-      setOutput("");
+      setOutput('');
       const data = await operation();
-      setOutput(
-        typeof data === "string"
-          ? data
-          : (JSON.stringify(data, null, 2) ?? "Готово"),
-      );
+      setOutput(typeof data === 'string' ? data : (JSON.stringify(data, null, 2) ?? 'Готово'));
     });
   return (
     <div className="page">
@@ -251,18 +224,14 @@ export function ToolsPage({ user }: { user: Profile }) {
       <section className="panel">
         <h2>Состояние API</h2>
         <QueryState query={health}>
-          {(data) => (
-            <pre className="api-output">{JSON.stringify(data, null, 2)}</pre>
-          )}
+          {(data) => <pre className="api-output">{JSON.stringify(data, null, 2)}</pre>}
         </QueryState>
-        <p className="muted">
-          Режим ответа по умолчанию: {flags.data?.guide_mode_default ?? "—"}
-        </p>
+        <p className="muted">Режим ответа по умолчанию: {flags.data?.guide_mode_default ?? '—'}</p>
         <ErrorText error={flags.error} />
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            const search = formText(new FormData(event.currentTarget), "q");
+            const search = formText(new FormData(event.currentTarget), 'q');
             run(() => api.system.search(search));
           }}
         >
@@ -282,7 +251,7 @@ export function ToolsPage({ user }: { user: Profile }) {
           >
             Метрики Prometheus
           </button>
-          {user.role !== "intern" && (
+          {user.role !== 'intern' && (
             <button
               className="btn"
               disabled={update.isPending}

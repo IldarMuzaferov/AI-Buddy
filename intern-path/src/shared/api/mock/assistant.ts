@@ -1,4 +1,4 @@
-import type { Chat, Message, ReplyMode, StreamEvent } from "../contracts";
+import type { Chat, Message, ReplyMode, StreamEvent } from '../contracts';
 import {
   activeStage,
   absenceFields,
@@ -16,8 +16,8 @@ import {
   steps,
   uid,
   type InternData,
-} from "./data";
-import { MockError, conflict, invalid } from "./http";
+} from './data';
+import { MockError, conflict, invalid } from './http';
 
 const replays = new Map<string, StreamEvent[]>();
 const sendsByIntern = new WeakMap<InternData, number[]>();
@@ -33,7 +33,7 @@ function responseStream(events: StreamEvent[], signal?: AbortSignal) {
           return;
         }
         await new Promise((resolve) =>
-          setTimeout(resolve, events[index].name === "token" ? 25 : 90),
+          setTimeout(resolve, events[index].name === 'token' ? 25 : 90),
         );
         if (signal?.aborted) {
           controller.error(signal.reason);
@@ -41,13 +41,11 @@ function responseStream(events: StreamEvent[], signal?: AbortSignal) {
         }
         const { name, data } = events[index++];
         controller.enqueue(
-          encoder.encode(
-            `event: ${name}\r\ndata: ${JSON.stringify(data)}\r\n\r\n`,
-          ),
+          encoder.encode(`event: ${name}\r\ndata: ${JSON.stringify(data)}\r\n\r\n`),
         );
       },
     }),
-    { headers: { "Content-Type": "text/event-stream; charset=utf-8" } },
+    { headers: { 'Content-Type': 'text/event-stream; charset=utf-8' } },
   );
 }
 
@@ -63,253 +61,220 @@ export function reply(
     signal?: AbortSignal;
   } = {},
 ) {
-  const replayKey = options.idempotencyKey
-    ? `${chat.id}:${options.idempotencyKey}`
-    : null;
+  const replayKey = options.idempotencyKey ? `${chat.id}:${options.idempotencyKey}` : null;
   const replay = replayKey ? replays.get(replayKey) : undefined;
   if (replay)
     return responseStream(
       replay.map((event) =>
-        event.name === "done"
-          ? { ...event, data: { ...event.data, replayed: true } }
-          : event,
+        event.name === 'done' ? { ...event, data: { ...event.data, replayed: true } } : event,
       ),
       options.signal,
     );
   if (data.tasks.some((task) => task.id === chat.task_id && task.locked))
-    throw conflict("Задача закрыта в трекере.");
+    throw conflict('Задача закрыта в трекере.');
   const text = question.toLowerCase();
   const messageId = uid();
-  const blocks: NonNullable<Message["blocks"]> = [];
+  const blocks: NonNullable<Message['blocks']> = [];
   const extras: StreamEvent[] = [];
-  const sources: NonNullable<Message["sources"]> = [];
-  let guide: Message["guide"] = null;
-  let route = "lookup";
-  let content = "";
-  const status = ["Ищу в вики", "Проверяю материалы команды", "Формирую ответ"];
+  const sources: NonNullable<Message['sources']> = [];
+  let guide: Message['guide'] = null;
+  let route = 'lookup';
+  let content = '';
+  const status = ['Ищу в вики', 'Проверяю материалы команды', 'Формирую ответ'];
   function addSource(...ids: string[]) {
     sources.push(...docs.filter((doc) => ids.includes(doc.document_id)));
   }
-  function addBlock(
-    event: Exclude<
-      StreamEvent,
-      { name: "status" | "token" | "source" | "done" }
-    >,
-  ) {
+  function addBlock(event: Exclude<StreamEvent, { name: 'status' | 'token' | 'source' | 'done' }>) {
     extras.push(event);
     blocks.push({ type: event.name, ...event.data });
   }
   if (!options.silent) {
     const attachments = (options.attachmentIds ?? []).map((id) => {
-      const attachment = data.attachments[chat.id]?.find(
-        (item) => item.id === id,
-      );
-      if (!attachment) throw invalid("Вложение не найдено.");
+      const attachment = data.attachments[chat.id]?.find((item) => item.id === id);
+      if (!attachment) throw invalid('Вложение не найдено.');
       return attachment;
     });
     const timestamp = Date.now();
-    const recent = (sendsByIntern.get(data) ?? []).filter(
-      (sentAt) => timestamp - sentAt < 60_000,
-    );
+    const recent = (sendsByIntern.get(data) ?? []).filter((sentAt) => timestamp - sentAt < 60_000);
     if (recent.length >= 20)
-      throw new MockError(
-        429,
-        "rate_limited",
-        "Можно отправить до 20 сообщений в минуту.",
-      );
+      throw new MockError(429, 'rate_limited', 'Можно отправить до 20 сообщений в минуту.');
     sendsByIntern.set(data, [...recent, timestamp]);
     data.messages.push({
       id: uid(),
       chat_id: chat.id,
-      role: "user",
+      role: 'user',
       content: question,
       attachments,
       created_at: now(),
     });
-    if (chat.title === "Новый чат")
-      chat.title = question.slice(0, 70) || "Вложение";
+    if (chat.title === 'Новый чат') chat.title = question.slice(0, 70) || 'Вложение';
   }
   if (database.failNext) {
     database.failNext = false;
-    route = "error";
-    content = "Не получилось ответить. Вот человек, которого можно спросить.";
+    route = 'error';
+    content = 'Не получилось ответить. Вот человек, которого можно спросить.';
     addBlock({
-      name: "error",
+      name: 'error',
       data: {
-        code: "llm_timeout",
+        code: 'llm_timeout',
         message: content,
-        fallback_person: personCard("boris"),
+        fallback_person: personCard('boris'),
       },
     });
   } else if (/глобальн/.test(text)) {
-    route = "out_of_scope";
-    content =
-      "Запросите доступ к конкретной странице или пространству команды.";
+    route = 'out_of_scope';
+    content = 'Запросите доступ к конкретной странице или пространству команды.';
     addBlock({
-      name: "notice",
+      name: 'notice',
       data: {
-        kind: "policy",
-        title: "Глобальное пространство",
-        text: "Доступ к глобальному пространству через помощника не оформляется.",
+        kind: 'policy',
+        title: 'Глобальное пространство',
+        text: 'Доступ к глобальному пространству через помощника не оформляется.',
       },
     });
   } else if (/доступ/.test(text) && /jira|джир|pay|проект/.test(text)) {
-    route = "access_request";
-    content = "Собрал черновик по шаблону команды Payments.";
-    const action = createAction(
-      data,
-      "access_request",
-      defaults,
-      chat.id,
-      messageId,
-    );
+    route = 'access_request';
+    content = 'Собрал черновик по шаблону команды Payments.';
+    const action = createAction(data, 'access_request', defaults, chat.id, messageId);
     addBlock({
-      name: "action_draft",
+      name: 'action_draft',
       data: {
         action_id: action.id,
-        type: "access_request",
+        type: 'access_request',
         payload: action.payload,
         fields,
-        approver: { id: "maria", name: "Мария К.", role: "Тимлид Payments" },
-        level_hint: "Для чтения задач достаточно уровня read.",
+        approver: { id: 'maria', name: 'Мария К.', role: 'Тимлид Payments' },
+        level_hint: 'Для чтения задач достаточно уровня read.',
       },
     });
   } else if (/отгул|отпуск|выходн/.test(text)) {
-    route = "absence_request";
-    content =
-      "Согласуйте даты с руководителем, затем проверьте черновик отсутствия.";
-    addSource("absence");
+    route = 'absence_request';
+    content = 'Согласуйте даты с руководителем, затем проверьте черновик отсутствия.';
+    addSource('absence');
     const action = createAction(
       data,
-      "absence_request",
-      { date_from: "", date_to: "", kind: "day_off", reason: "" },
+      'absence_request',
+      { date_from: '', date_to: '', kind: 'day_off', reason: '' },
       chat.id,
       messageId,
     );
     addBlock({
-      name: "action_draft",
+      name: 'action_draft',
       data: {
         action_id: action.id,
-        type: "absence_request",
+        type: 'absence_request',
         payload: action.payload,
         fields: absenceFields,
-        approver: { id: "maria", name: "Мария К.", role: "Тимлид Payments" },
+        approver: { id: 'maria', name: 'Мария К.', role: 'Тимлид Payments' },
       },
     });
   } else if (/практик|потренир/.test(text)) {
-    route = "practice";
-    content = "Вот микро-задания для самостоятельной практики.";
+    route = 'practice';
+    content = 'Вот микро-задания для самостоятельной практики.';
     const topic = /grafana|графан|логи/.test(text)
-      ? "grafana"
+      ? 'grafana'
       : /стенд/.test(text)
-        ? "stand"
-        : "git";
-    const pack = practiceFor(
-      steps.find((step) => step.topic === topic)?.id ?? topic,
-      topic,
-    );
+        ? 'stand'
+        : 'git';
+    const pack = practiceFor(steps.find((step) => step.topic === topic)?.id ?? topic, topic);
     data.practice.unshift(...pack.items);
-    addBlock({ name: "practice", data: pack });
+    addBlock({ name: 'practice', data: pack });
   } else if (/стенд/.test(text)) {
-    content =
-      "В документах расходится порядок получения доступа к тестовому стенду.";
+    content = 'В документах расходится порядок получения доступа к тестовому стенду.';
     const action = createAction(
       data,
-      "doc_conflict_report",
+      'doc_conflict_report',
       {
-        text: "Здравствуйте! В двух инструкциях по доступу к стенду указан разный порядок. Какой действует сейчас?",
+        text: 'Здравствуйте! В двух инструкциях по доступу к стенду указан разный порядок. Какой действует сейчас?',
       },
       chat.id,
       messageId,
     );
-    addBlock({ name: "conflict", data: conflictCard(action) });
+    addBlock({ name: 'conflict', data: conflictCard(action) });
   } else if (/кто|владелец/.test(text) && /плат|billing/.test(text)) {
     content =
-      "За сервис платежей (Billing) отвечает **Игорь Л.** — он указан владельцем `/services/billing/` в CODEOWNERS.";
-    addSource("codeowners", "billing");
+      'За сервис платежей (Billing) отвечает **Игорь Л.** — он указан владельцем `/services/billing/` в CODEOWNERS.';
+    addSource('codeowners', 'billing');
     addBlock({
-      name: "person_card",
-      data: personCard("igor", {
+      name: 'person_card',
+      data: personCard('igor', {
         questions: [
-          "Где посмотреть устройство платёжного модуля?",
-          "Кто проверяет изменения Billing?",
+          'Где посмотреть устройство платёжного модуля?',
+          'Кто проверяет изменения Billing?',
         ],
       }),
     });
   } else if (/дальше|следующ/.test(text)) {
-    route = "process";
+    route = 'process';
     const step = nextStep(data);
     content = step
       ? `Сейчас у вас этап «${activeStage(data.day).label}». Вот ближайший шаг чек-листа.`
-      : "Все шаги чек-листа отмечены.";
-    if (step) addBlock({ name: "next_step", data: step });
+      : 'Все шаги чек-листа отмечены.';
+    if (step) addBlock({ name: 'next_step', data: step });
   } else if (
     /ветк|git|ревью|pipeline|пайплайн|сделай за меня/.test(text) ||
-    data.messages.findLast(
-      (item) => item.chat_id === chat.id && item.role === "assistant",
-    )?.guide
+    data.messages.findLast((item) => item.chat_id === chat.id && item.role === 'assistant')?.guide
   ) {
-    route = "howto";
+    route = 'howto';
     const last = data.messages.findLast(
-      (item) => item.chat_id === chat.id && item.role === "assistant",
+      (item) => item.chat_id === chat.id && item.role === 'assistant',
     );
     const topic = /ревью/.test(text)
-      ? "review"
+      ? 'review'
       : /pipeline|пайплайн/.test(text)
-        ? "ci"
+        ? 'ci'
         : /ветк|git/.test(text)
-          ? "git"
-          : (last?.guide?.topic ?? "git");
-    const review = topic === "review",
-      ci = topic === "ci";
+          ? 'git'
+          : (last?.guide?.topic ?? 'git');
+    const review = topic === 'review',
+      ci = topic === 'ci';
     const step = last?.guide?.topic === topic ? last.guide.step + 1 : 1;
-    addSource(review ? "review" : ci ? "cicd" : "gitpr");
-    if (mode === "guide" && step <= 2) {
+    addSource(review ? 'review' : ci ? 'cicd' : 'gitpr');
+    if (mode === 'guide' && step <= 2) {
       guide = { topic, step, total: 2 };
       content =
         step === 1
           ? review
-            ? "**Вопрос:** в какой папке лежат изменения? Проверьте владельца в CODEOWNERS."
+            ? '**Вопрос:** в какой папке лежат изменения? Проверьте владельца в CODEOWNERS.'
             : ci
-              ? "**Вопрос:** какой шаг упал первым — сборка, линтер или тесты?"
-              : "**Вопрос:** какой ключ у вашей задачи в трекере? Он понадобится в имени ветки."
-          : "Откройте инструкцию из источника и сверьте с ней ваш следующий шаг.";
+              ? '**Вопрос:** какой шаг упал первым — сборка, линтер или тесты?'
+              : '**Вопрос:** какой ключ у вашей задачи в трекере? Он понадобится в имени ветки.'
+          : 'Откройте инструкцию из источника и сверьте с ней ваш следующий шаг.';
     } else {
       content = review
-        ? "Откройте pull request в `dev`. Ревьюеры назначаются по CODEOWNERS."
+        ? 'Откройте pull request в `dev`. Ревьюеры назначаются по CODEOWNERS.'
         : ci
-          ? "1. Найдите первую ошибку в логе.\n2. Повторите шаг локально.\n3. Исправьте ошибку и отправьте коммит."
-          : "1. `git checkout dev && git pull`\n2. `git checkout -b feature/PAY-214-short-name`\n3. После коммита отправьте ветку через `git push -u origin`.";
+          ? '1. Найдите первую ошибку в логе.\n2. Повторите шаг локально.\n3. Исправьте ошибку и отправьте коммит.'
+          : '1. `git checkout dev && git pull`\n2. `git checkout -b feature/PAY-214-short-name`\n3. После коммита отправьте ветку через `git push -u origin`.';
     }
   } else if (/grafana|графан|логи|метрик/.test(text)) {
     content =
-      "Метрики и логи Billing — в Grafana, дашборды «Billing / Overview» и «Billing / Logs».";
-    addSource("grafana");
+      'Метрики и логи Billing — в Grafana, дашборды «Billing / Overview» и «Billing / Logs».';
+    addSource('grafana');
     addBlock({
-      name: "person_card",
-      data: personCard("oleg", { compact: true }),
+      name: 'person_card',
+      data: personCard('oleg', { compact: true }),
     });
   } else if (/код|конфиг|собрать|репозитор/.test(text)) {
     content =
-      "Код сервиса — в Bitbucket, репозиторий `billing-service`. Конфигурация лежит в папке `/config`.";
-    addSource("billing", "build");
+      'Код сервиса — в Bitbucket, репозиторий `billing-service`. Конфигурация лежит в папке `/config`.';
+    addSource('billing', 'build');
   } else if (/тяжело|устал|страшно|не справля/.test(text)) {
-    route = "emotional";
+    route = 'emotional';
     content =
-      "В первые недели многое может быть непонятно. Возьмите один конкретный вопрос на ближайшую встречу с наставником.";
-    addBlock({ name: "person_card", data: personCard("boris") });
+      'В первые недели многое может быть непонятно. Возьмите один конкретный вопрос на ближайшую встречу с наставником.';
+    addBlock({ name: 'person_card', data: personCard('boris') });
   } else {
-    route = "no_answer";
-    content =
-      "В доступных мне материалах этого нет. Вот человек, который может подсказать.";
-    addBlock({ name: "person_card", data: personCard("boris") });
+    route = 'no_answer';
+    content = 'В доступных мне материалах этого нет. Вот человек, который может подсказать.';
+    addBlock({ name: 'person_card', data: personCard('boris') });
   }
   chat.updated_at = now();
   chat.mode = mode;
   data.messages.push({
     id: messageId,
     chat_id: chat.id,
-    role: "assistant",
+    role: 'assistant',
     route,
     mode,
     content,
@@ -323,19 +288,19 @@ export function reply(
   save();
   const events: StreamEvent[] = [
     ...status.map((text, index) => ({
-      name: "status" as const,
+      name: 'status' as const,
       data: { step: String(index), text },
     })),
     ...(content.match(/[\s\S]{1,30}/g) ?? []).map((text) => ({
-      name: "token" as const,
+      name: 'token' as const,
       data: { text },
     })),
-    ...sources.map((data) => ({ name: "source" as const, data })),
+    ...sources.map((data) => ({ name: 'source' as const, data })),
     ...extras,
-    { name: "done", data: { message_id: messageId, mode, route, guide } },
+    { name: 'done', data: { message_id: messageId, mode, route, guide } },
   ];
   if (replayKey) {
-    if (replays.size >= 100) replays.delete(replays.keys().next().value ?? "");
+    if (replays.size >= 100) replays.delete(replays.keys().next().value ?? '');
     replays.set(replayKey, events);
   }
   return responseStream(events, options.signal);

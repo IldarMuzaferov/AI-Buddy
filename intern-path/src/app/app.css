@@ -107,7 +107,7 @@
 .kv-row dd {
   margin: 0;
 }
-.btn[aria-pressed="true"] {
+.btn[aria-pressed='true'] {
   background: #eaf6ff;
   border-color: #9dd4f7;
 }

@@ -1,32 +1,26 @@
-import { useState, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useApi, useData } from "@/entities/session/api/client";
-import { useSession } from "@/entities/session/store";
-import { Avatar, Icon, PROJECT_NAME, QueryState } from "@/shared/ui/common";
-import { useNavigation, type Route } from "@/shared/ui/navigation";
-import type { Chat, Profile } from "@/shared/api/contracts";
-import { Notifications } from "@/features/notifications/Notifications";
-import { BackendSwitch } from "@/entities/session/BackendSwitch";
+import { useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useApi, useData } from '@/entities/session/api/client';
+import { useSession } from '@/entities/session/store';
+import { Avatar, Icon, PROJECT_NAME, QueryState } from '@/shared/ui/common';
+import { useNavigation, type Route } from '@/shared/ui/navigation';
+import type { Chat, Profile } from '@/shared/api/contracts';
+import { Notifications } from '@/features/notifications/Notifications';
+import { BackendSwitch } from '@/entities/session/BackendSwitch';
 
 const names = {
-  home: "Новый чат",
-  chat: "Чат",
-  task: "Задача",
-  tasks: "Задачи",
-  contacts: "Знакомства",
-  journal: "Журнал достижений",
-  privacy: "Приватность",
-  mentor: "Мои стажёры",
-  tools: "Служебная панель",
-  actions: "Заявки",
+  home: 'Новый чат',
+  chat: 'Чат',
+  task: 'Задача',
+  tasks: 'Задачи',
+  contacts: 'Знакомства',
+  journal: 'Журнал достижений',
+  privacy: 'Приватность',
+  mentor: 'Мои стажёры',
+  tools: 'Служебная панель',
+  actions: 'Заявки',
 };
-export function Shell({
-  user,
-  children,
-}: {
-  user: Profile;
-  children: ReactNode;
-}) {
+export function Shell({ user, children }: { user: Profile; children: ReactNode }) {
   const { route, go } = useNavigation(),
     api = useApi(),
     cache = useQueryClient(),
@@ -34,8 +28,8 @@ export function Shell({
   const [open, setOpen] = useState(false),
     [profile, setProfile] = useState(false);
   const [folders, setFolders] = useState<Record<string, boolean>>({});
-  const isIntern = user.role === "intern";
-  const chats = useData(["chats"], api.chats.list, isIntern);
+  const isIntern = user.role === 'intern';
+  const chats = useData(['chats'], api.chats.list, isIntern);
   function navigate(route: Route) {
     go(route);
     setOpen(false);
@@ -44,12 +38,9 @@ export function Shell({
     return (
       <div
         key={chat.id}
-        className={`sb-row ${route.page === "chat" && route.id === chat.id ? "cur" : ""}`}
+        className={`sb-row ${route.page === 'chat' && route.id === chat.id ? 'cur' : ''}`}
       >
-        <button
-          className="sb-item"
-          onClick={() => navigate({ page: "chat", id: chat.id })}
-        >
+        <button className="sb-item" onClick={() => navigate({ page: 'chat', id: chat.id })}>
           <Icon name="chat" />
           <span className="t">{chat.title}</span>
           {chat.unresolved && <span className="udot" title="Не решено" />}
@@ -58,31 +49,23 @@ export function Shell({
     );
   }
   const links = [
-    ["journal", "award"],
-    ["contacts", "people"],
-    ["privacy", "shield"],
-    ["actions", "key"],
-    ["tasks", "folder"],
+    ['journal', 'award'],
+    ['contacts', 'people'],
+    ['privacy', 'shield'],
+    ['actions', 'key'],
+    ['tasks', 'folder'],
   ] as const;
   return (
-    <div className={`app ${open ? "sb-open" : ""}`}>
+    <div className={`app ${open ? 'sb-open' : ''}`}>
       {open && (
-        <button
-          className="scrim"
-          aria-label="Закрыть меню"
-          onClick={() => setOpen(false)}
-        />
+        <button className="scrim" aria-label="Закрыть меню" onClick={() => setOpen(false)} />
       )}
       <aside className="sidebar" aria-label="Меню">
         <button
           className="sb-brand"
           onClick={() =>
             navigate({
-              page: isIntern
-                ? "home"
-                : user.role === "mentor"
-                  ? "mentor"
-                  : "tools",
+              page: isIntern ? 'home' : user.role === 'mentor' ? 'mentor' : 'tools',
             })
           }
         >
@@ -92,10 +75,7 @@ export function Shell({
         <div className="sb-scroll">
           {isIntern ? (
             <>
-              <button
-                className="btn primary sb-new"
-                onClick={() => navigate({ page: "home" })}
-              >
+              <button className="btn primary sb-new" onClick={() => navigate({ page: 'home' })}>
                 <Icon name="plus" /> Новый чат
               </button>
               <nav className="sb-nav">
@@ -103,7 +83,7 @@ export function Shell({
                   <button
                     key={page}
                     className="sb-link"
-                    aria-current={route.page === page ? "page" : undefined}
+                    aria-current={route.page === page ? 'page' : undefined}
                     onClick={() => navigate({ page })}
                   >
                     <Icon name={icon} />
@@ -120,18 +100,20 @@ export function Shell({
                     </div>
                     {data.tasks.length ? (
                       data.tasks.map(({ task, chats }) => {
-                        const expanded =
-                          folders[task.id] ?? task.status === "in_progress";
+                        const expanded = folders[task.id] ?? task.status === 'in_progress';
                         return (
                           <div key={task.id}>
                             <div className="sb-row">
                               <button
                                 className="sb-item"
                                 onClick={() =>
-                                  navigate({ page: "task", id: task.id })
+                                  navigate({
+                                    page: 'task',
+                                    id: task.id,
+                                  })
                                 }
                               >
-                                <Icon name={task.locked ? "lock" : "folder"} />
+                                <Icon name={task.locked ? 'lock' : 'folder'} />
                                 <span className="t">{task.title}</span>
                                 <span className={`sdot ${task.status}`} />
                               </button>
@@ -146,9 +128,7 @@ export function Shell({
                                   }))
                                 }
                               >
-                                <Icon
-                                  name={expanded ? "chevdown" : "chevron"}
-                                />
+                                <Icon name={expanded ? 'chevdown' : 'chevron'} />
                               </button>
                             </div>
                             {expanded && (
@@ -170,29 +150,21 @@ export function Shell({
                     {data.history.length ? (
                       data.history.map(chatRow)
                     ) : (
-                      <p className="sb-empty">
-                        Здесь появятся ваши чаты. Их видите только вы.
-                      </p>
+                      <p className="sb-empty">Здесь появятся ваши чаты. Их видите только вы.</p>
                     )}
                   </>
                 )}
               </QueryState>
             </>
           ) : (
-            user.role === "mentor" && (
-              <button
-                className="sb-link"
-                onClick={() => navigate({ page: "mentor" })}
-              >
+            user.role === 'mentor' && (
+              <button className="sb-link" onClick={() => navigate({ page: 'mentor' })}>
                 <Icon name="people" />
                 Мои стажёры
               </button>
             )
           )}
-          <button
-            className="sb-link"
-            onClick={() => navigate({ page: "tools" })}
-          >
+          <button className="sb-link" onClick={() => navigate({ page: 'tools' })}>
             <Icon name="wrench" />
             {names.tools}
           </button>
@@ -206,7 +178,7 @@ export function Shell({
                 onClick={() => {
                   cache.clear();
                   signOut();
-                  go({ page: "home" });
+                  go({ page: 'home' });
                 }}
               >
                 Сменить пользователя
@@ -223,8 +195,7 @@ export function Shell({
               <strong>{user.name}</strong>
               <small>
                 {user.title}
-                {user.intern &&
-                  ` · день ${user.intern.day} из ${user.intern.total_days}`}
+                {user.intern && ` · день ${user.intern.day} из ${user.intern.total_days}`}
               </small>
             </span>
             <Icon name="dots" />
@@ -247,18 +218,14 @@ export function Shell({
               <span className="live-dot" />
               {user.intern.stage.label}
               <span className="long">
-                {" "}
+                {' '}
                 · день {user.intern.day} из {user.intern.total_days}
               </span>
             </span>
           )}
           <Notifications />
         </header>
-        <div
-          className="content"
-          id="content"
-          key={route.page + ("id" in route ? route.id : "")}
-        >
+        <div className="content" id="content" key={route.page + ('id' in route ? route.id : '')}>
           {children}
         </div>
       </main>

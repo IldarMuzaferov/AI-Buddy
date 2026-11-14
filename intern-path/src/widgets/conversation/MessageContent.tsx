@@ -1,23 +1,13 @@
-import { useState } from "react";
-import Markdown from "react-markdown";
-import { useApi, useData, useUpdate } from "@/entities/session/api/client";
-import * as schema from "@/shared/api/contracts";
-import { ActionCard } from "@/features/actions/ActionCard";
-import { PracticeButton, PracticeCard } from "@/features/checklist/Practice";
-import { useAssistant } from "@/features/assistant/useAssistant";
-import {
-  dateLabel,
-  ErrorText,
-  Glyph,
-  Icon,
-  safeLink,
-} from "@/shared/ui/common";
+import { useState } from 'react';
+import Markdown from 'react-markdown';
+import { useApi, useData, useUpdate } from '@/entities/session/api/client';
+import * as schema from '@/shared/api/contracts';
+import { ActionCard } from '@/features/actions/ActionCard';
+import { PracticeButton, PracticeCard } from '@/features/checklist/Practice';
+import { useAssistant } from '@/features/assistant/useAssistant';
+import { dateLabel, ErrorText, Glyph, Icon, safeLink } from '@/shared/ui/common';
 
-export function Sources({
-  items,
-}: {
-  items: NonNullable<schema.Message["sources"]>;
-}) {
+export function Sources({ items }: { items: NonNullable<schema.Message['sources']> }) {
   return (
     <div className="sources">
       {items.map((source) => (
@@ -33,8 +23,7 @@ export function Sources({
             <strong>{source.title}</strong>
             <small>
               {source.system}
-              {source.updated_at &&
-                ` · обновлено ${dateLabel(source.updated_at)}`}
+              {source.updated_at && ` · обновлено ${dateLabel(source.updated_at)}`}
             </small>
           </span>
           <Icon name="external" />
@@ -43,27 +32,19 @@ export function Sources({
     </div>
   );
 }
-function PersonCard({
-  person,
-  chatId,
-}: {
-  person: schema.Person;
-  chatId: string;
-}) {
+function PersonCard({ person, chatId }: { person: schema.Person; chatId: string }) {
   const api = useApi(),
     update = useUpdate(),
-    contacts = useData(["contacts", ""], () => api.contacts.list()),
+    contacts = useData(['contacts', ''], () => api.contacts.list()),
     [copied, setCopied] = useState(false);
-  const saved = contacts.data?.some(
-    (contact) => contact.person_id === person.person_id,
-  );
+  const saved = contacts.data?.some((contact) => contact.person_id === person.person_id);
   return (
     <section className="result-card person-card">
       <div className="result-kicker">
         <Glyph name="people" color="purple" />
         <div>
           <strong>
-            {person.compact ? "Если не получится: " : ""}
+            {person.compact ? 'Если не получится: ' : ''}
             {person.name}
           </strong>
           <p>
@@ -77,9 +58,7 @@ function PersonCard({
       {person.note && <p>{person.note}</p>}
       {person.how_to_ask && (
         <details>
-          <summary>
-            Как обратиться{person.duration && ` · ${person.duration}`}
-          </summary>
+          <summary>Как обратиться{person.duration && ` · ${person.duration}`}</summary>
           <p className="pre-line">{person.how_to_ask}</p>
           {person.questions?.length && (
             <ul>
@@ -92,7 +71,7 @@ function PersonCard({
       )}
       {person.chain?.length && (
         <details>
-          <summary>{person.chain_label || "К кому ещё обратиться"}</summary>
+          <summary>{person.chain_label || 'К кому ещё обратиться'}</summary>
           <ul>
             {person.chain.map((item) => (
               <li key={item.id}>
@@ -117,20 +96,20 @@ function PersonCard({
             )
           }
         >
-          {saved ? "В знакомствах" : "Сохранить в знакомства"}
+          {saved ? 'В знакомствах' : 'Сохранить в знакомства'}
         </button>
         {person.how_to_ask && (
           <button
             className="btn small"
             onClick={() =>
               update.mutate(async () => {
-                await navigator.clipboard.writeText(person.how_to_ask ?? "");
+                await navigator.clipboard.writeText(person.how_to_ask ?? '');
                 setCopied(true);
               })
             }
           >
             <Icon name="copy" />
-            {copied ? "Скопировано" : "Написать"}
+            {copied ? 'Скопировано' : 'Написать'}
           </button>
         )}
       </div>
@@ -138,34 +117,20 @@ function PersonCard({
   );
 }
 
-export function Block({
-  value,
-  chatId,
-}: {
-  value: Record<string, unknown>;
-  chatId: string;
-}) {
+export function Block({ value, chatId }: { value: Record<string, unknown>; chatId: string }) {
   const assistant = useAssistant();
   const name = value.type ?? value.kind;
-  const data =
-    value.data && typeof value.data === "object"
-      ? { ...value, ...value.data }
-      : value;
-  if (name === "person_card" || name === "person") {
+  const data = value.data && typeof value.data === 'object' ? { ...value, ...value.data } : value;
+  if (name === 'person_card' || name === 'person') {
     const parsed = schema.person.safeParse(data);
-    if (parsed.success)
-      return <PersonCard person={parsed.data} chatId={chatId} />;
+    if (parsed.success) return <PersonCard person={parsed.data} chatId={chatId} />;
   }
-  if (name === "action_draft") {
+  if (name === 'action_draft') {
     const parsed = schema.actionDraft.safeParse(data);
-    if (parsed.success)
-      return (
-        <ActionCard actionId={parsed.data.action_id} draft={parsed.data} />
-      );
-    if (typeof data.action_id === "string")
-      return <ActionCard actionId={data.action_id} />;
+    if (parsed.success) return <ActionCard actionId={parsed.data.action_id} draft={parsed.data} />;
+    if (typeof data.action_id === 'string') return <ActionCard actionId={data.action_id} />;
   }
-  if (name === "conflict") {
+  if (name === 'conflict') {
     const parsed = schema.conflict.safeParse(data);
     if (parsed.success) {
       const conflict = parsed.data;
@@ -177,11 +142,7 @@ export function Block({
           </div>
           <div className="variants">
             {[...conflict.variants]
-              .sort(
-                (a, b) =>
-                  Number(Boolean(b.team_version)) -
-                  Number(Boolean(a.team_version)),
-              )
+              .sort((a, b) => Number(Boolean(b.team_version)) - Number(Boolean(a.team_version)))
               .map((variant) => (
                 <div className="panel" key={variant.document_id}>
                   <strong>{variant.source}</strong>
@@ -193,11 +154,7 @@ export function Block({
                     ))}
                   </ol>
                   {variant.url && (
-                    <a
-                      href={safeLink(variant.url)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
+                    <a href={safeLink(variant.url)} target="_blank" rel="noreferrer">
                       Открыть источник
                     </a>
                   )}
@@ -205,23 +162,17 @@ export function Block({
               ))}
           </div>
           <p>{conflict.note}</p>
-          <p>
-            Получатели:{" "}
-            {conflict.recipients.map((person) => person.name).join(", ")}
-          </p>
+          <p>Получатели: {conflict.recipients.map((person) => person.name).join(', ')}</p>
           <ActionCard actionId={conflict.action_id} />
         </section>
       );
     }
   }
-  if (name === "practice") {
+  if (name === 'practice') {
     const parsed = schema.practice.safeParse(data);
-    if (parsed.success)
-      return (
-        <PracticeCard label={parsed.data.label} items={parsed.data.items} />
-      );
+    if (parsed.success) return <PracticeCard label={parsed.data.label} items={parsed.data.items} />;
   }
-  if (name === "next_step") {
+  if (name === 'next_step') {
     const parsed = schema.nextStep.safeParse(data);
     if (parsed.success) {
       const step = parsed.data;
@@ -234,12 +185,7 @@ export function Block({
               className="btn small"
               disabled={assistant.pending}
               onClick={() =>
-                void assistant.send(
-                  `Помоги с шагом «${step.title}»`,
-                  "guide",
-                  undefined,
-                  chatId,
-                )
+                void assistant.send(`Помоги с шагом «${step.title}»`, 'guide', undefined, chatId)
               }
             >
               Спросить про шаг
@@ -250,7 +196,7 @@ export function Block({
       );
     }
   }
-  if (name === "notice") {
+  if (name === 'notice') {
     const parsed = schema.notice.safeParse(data);
     if (parsed.success)
       return (
@@ -260,7 +206,7 @@ export function Block({
         </section>
       );
   }
-  if (name === "error") {
+  if (name === 'error') {
     const parsed = schema.streamSchemas.error.safeParse(data);
     if (parsed.success)
       return (
@@ -275,17 +221,11 @@ export function Block({
   return null;
 }
 
-export function MessageRow({
-  message,
-  locked,
-}: {
-  message: schema.Message;
-  locked?: boolean;
-}) {
+export function MessageRow({ message, locked }: { message: schema.Message; locked?: boolean }) {
   const api = useApi(),
     update = useUpdate(),
     assistant = useAssistant();
-  if (message.role === "user")
+  if (message.role === 'user')
     return (
       <div className="msg-user">
         {message.attachments?.map((file) => (
@@ -294,9 +234,7 @@ export function MessageRow({
             {file.filename}
           </span>
         ))}
-        {message.content && (
-          <div className="bubble pre-line">{message.content}</div>
-        )}
+        {message.content && <div className="bubble pre-line">{message.content}</div>}
       </div>
     );
   return (
@@ -333,46 +271,38 @@ export function MessageRow({
             <button
               className="btn small"
               disabled={locked || assistant.pending}
-              onClick={() =>
-                void assistant.followUp(message.chat_id, message.id, "direct")
-              }
+              onClick={() => void assistant.followUp(message.chat_id, message.id, 'direct')}
             >
               <Icon name="bolt" />
               Сразу ответ
             </button>
           )}
-          {message.route === "error" && (
+          {message.route === 'error' && (
             <button
               className="btn small"
               disabled={locked || assistant.pending}
-              onClick={() =>
-                void assistant.followUp(message.chat_id, message.id, "retry")
-              }
+              onClick={() => void assistant.followUp(message.chat_id, message.id, 'retry')}
             >
               <Icon name="refresh" />
               Повторить
             </button>
           )}
-          {message.route !== "error" && (
+          {message.route !== 'error' && (
             <>
               <button
                 className="btn small"
-                aria-pressed={message.feedback === "yes"}
+                aria-pressed={message.feedback === 'yes'}
                 disabled={update.isPending}
-                onClick={() =>
-                  update.mutate(() => api.chats.feedback(message.id, true))
-                }
+                onClick={() => update.mutate(() => api.chats.feedback(message.id, true))}
               >
                 <Icon name="thumbup" />
                 Помогло
               </button>
               <button
                 className="btn small"
-                aria-pressed={message.feedback === "no"}
+                aria-pressed={message.feedback === 'no'}
                 disabled={update.isPending}
-                onClick={() =>
-                  update.mutate(() => api.chats.feedback(message.id, false))
-                }
+                onClick={() => update.mutate(() => api.chats.feedback(message.id, false))}
               >
                 <Icon name="thumbdown" />
                 Не помогло

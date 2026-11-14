@@ -1,18 +1,18 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import icons from "./icons.json";
+import { useEffect, useRef, type ReactNode } from 'react';
+import icons from './icons.json';
 
-export const PROJECT_NAME = "Путь стажёра";
+export const PROJECT_NAME = 'Путь стажёра';
 export const taskLabels = {
-  new: "Новая",
-  in_progress: "В работе",
-  review: "На ревью",
-  done: "Закрыта в трекере",
+  new: 'Новая',
+  in_progress: 'В работе',
+  review: 'На ревью',
+  done: 'Закрыта в трекере',
 };
 export const taskColors = {
-  new: "neutral",
-  in_progress: "info",
-  review: "wait",
-  done: "good",
+  new: 'neutral',
+  in_progress: 'info',
+  review: 'wait',
+  done: 'good',
 };
 export function Icon({ name }: { name: keyof typeof icons }) {
   return (
@@ -24,26 +24,14 @@ export function Icon({ name }: { name: keyof typeof icons }) {
     />
   );
 }
-export function Glyph({
-  name,
-  color = "blue",
-}: {
-  name: keyof typeof icons;
-  color?: string;
-}) {
+export function Glyph({ name, color = 'blue' }: { name: keyof typeof icons; color?: string }) {
   return (
     <span className={`object-icon ${color}`}>
       <Icon name={name} />
     </span>
   );
 }
-export function Badge({
-  children,
-  color = "neutral",
-}: {
-  children: ReactNode;
-  color?: string;
-}) {
+export function Badge({ children, color = 'neutral' }: { children: ReactNode; color?: string }) {
   return (
     <span className={`status ${color}`}>
       <span className="status-dot" />
@@ -53,8 +41,8 @@ export function Badge({
 }
 export function Avatar({
   name,
-  color = "purple",
-  size = "",
+  color = 'purple',
+  size = '',
 }: {
   name: string;
   color?: string;
@@ -63,11 +51,11 @@ export function Avatar({
   return (
     <span className={`avatar ${color} ${size}`} aria-hidden="true">
       {name
-        .replaceAll(".", "")
+        .replaceAll('.', '')
         .split(/\s+/)
         .slice(0, 2)
         .map((word) => word[0])
-        .join("")
+        .join('')
         .toUpperCase()}
     </span>
   );
@@ -89,7 +77,7 @@ export function Hero({ note }: { note?: string }) {
 export function ErrorText({ error }: { error: unknown }) {
   return error ? (
     <p role="alert" className="inline-error">
-      {error instanceof Error ? error.message : "Не удалось выполнить запрос."}
+      {error instanceof Error ? error.message : 'Не удалось выполнить запрос.'}
     </p>
   ) : null;
 }
@@ -105,10 +93,7 @@ export function QueryState<Data>({
   };
   children: (data: Data) => ReactNode;
 }) {
-  if (query.isPending)
-    return (
-      <div className="sk sk-line" aria-label="Загрузка" aria-busy="true" />
-    );
+  if (query.isPending) return <div className="sk sk-line" aria-label="Загрузка" aria-busy="true" />;
   if (query.error)
     return (
       <div className="empty-block">
@@ -142,8 +127,7 @@ export function Dialog({
     const previous = document.activeElement;
     if (!dialog.current?.contains(previous)) dialog.current?.focus();
     return () => {
-      if (previous instanceof HTMLElement && previous.isConnected)
-        previous.focus();
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
     };
   }, []);
   return (
@@ -157,22 +141,21 @@ export function Dialog({
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
         onKeyDown={(event) => {
-          if (event.key === "Escape") {
+          if (event.key === 'Escape') {
             onClose();
             return;
           }
-          if (event.key !== "Tab") return;
+          if (event.key !== 'Tab') return;
           const focusable = Array.from(
             dialog.current?.querySelectorAll<HTMLElement>(
-              "button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href]",
+              'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href]',
             ) ?? [],
           );
           const first = focusable[0],
             last = focusable.at(-1);
           if (
             event.shiftKey &&
-            (document.activeElement === first ||
-              document.activeElement === dialog.current)
+            (document.activeElement === first || document.activeElement === dialog.current)
           ) {
             event.preventDefault();
             last?.focus();
@@ -184,11 +167,7 @@ export function Dialog({
       >
         <div className="dialog-head">
           <h2>{title}</h2>
-          <button
-            className="icon-button"
-            aria-label="Закрыть"
-            onClick={onClose}
-          >
+          <button className="icon-button" aria-label="Закрыть" onClick={onClose}>
             <Icon name="close" />
           </button>
         </div>
@@ -197,47 +176,39 @@ export function Dialog({
     </div>
   );
 }
-export const asString = (value: unknown) =>
-  typeof value === "string" ? value : "";
-export const formText = (form: FormData, name: string) =>
-  asString(form.get(name)).trim();
+export const asString = (value: unknown) => (typeof value === 'string' ? value : '');
+export const formText = (form: FormData, name: string) => asString(form.get(name)).trim();
 export const splitList = (text: string) =>
   text
-    .split(",")
+    .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
 export function dateLabel(value?: string | null) {
-  if (!value) return "—";
+  if (!value) return '—';
   const timestamp = new Date(
-    /^\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d(?:\.\d+)?)?$/.test(value)
-      ? value + "Z"
-      : value,
+    /^\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d(?:\.\d+)?)?$/.test(value) ? value + 'Z' : value,
   );
   return Number.isNaN(timestamp.getTime())
     ? value
-    : timestamp.toLocaleDateString("ru-RU", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        ...(value.length > 10
-          ? { hour: "2-digit", minute: "2-digit" }
-          : { timeZone: "UTC" }),
+    : timestamp.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        ...(value.length > 10 ? { hour: '2-digit', minute: '2-digit' } : { timeZone: 'UTC' }),
       });
 }
 export function safeLink(url?: string | null) {
   if (!url) return undefined;
   try {
     const parsed = new URL(url, location.origin);
-    return ["http:", "https:"].includes(parsed.protocol)
-      ? parsed.href
-      : undefined;
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : undefined;
   } catch {
     return undefined;
   }
 }
 export function download(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = url;
   link.download = name;
   link.click();

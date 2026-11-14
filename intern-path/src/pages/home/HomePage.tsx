@@ -1,30 +1,19 @@
-import { useApi, useData } from "@/entities/session/api/client";
-import type { Profile } from "@/shared/api/contracts";
-import { Composer } from "@/features/assistant/Composer";
-import { useAssistant } from "@/features/assistant/useAssistant";
-import {
-  Checklist,
-  PracticeButton,
-  PracticePanel,
-} from "@/features/checklist/Practice";
-import {
-  dateLabel,
-  Glyph,
-  Hero,
-  Icon,
-  QueryState,
-  taskLabels,
-} from "@/shared/ui/common";
-import { useNavigation } from "@/shared/ui/navigation";
+import { useApi, useData } from '@/entities/session/api/client';
+import type { Profile } from '@/shared/api/contracts';
+import { Composer } from '@/features/assistant/Composer';
+import { useAssistant } from '@/features/assistant/useAssistant';
+import { Checklist, PracticeButton, PracticePanel } from '@/features/checklist/Practice';
+import { dateLabel, Glyph, Hero, Icon, QueryState, taskLabels } from '@/shared/ui/common';
+import { useNavigation } from '@/shared/ui/navigation';
 
 export function HomePage({ user }: { user: Profile }) {
   const api = useApi(),
-    home = useData(["home"], api.home),
-    flags = useData(["flags"], api.system.flags);
+    home = useData(['home'], api.home),
+    flags = useData(['flags'], api.system.flags);
   const assistant = useAssistant(),
     go = useNavigation((state) => state.go);
   const ask = (text: string) =>
-    void assistant.send(text, flags.data?.guide_mode_default ?? "guide");
+    void assistant.send(text, flags.data?.guide_mode_default ?? 'guide');
   return (
     <div className="page">
       <QueryState query={home}>
@@ -36,14 +25,12 @@ export function HomePage({ user }: { user: Profile }) {
                   <span className="live-dot" />
                   Путь стажёра
                   {user.team_id &&
-                    ` · команда ${user.team_id === "payments" ? "Payments" : user.team_id}`}
+                    ` · команда ${user.team_id === 'payments' ? 'Payments' : user.team_id}`}
                 </span>
                 <h1>
                   С чего начнём<span className="blue-period">?</span>
                 </h1>
-                <p>
-                  Спросите, где что лежит, кто отвечает и как здесь принято.
-                </p>
+                <p>Спросите, где что лежит, кто отвечает и как здесь принято.</p>
                 {user.intern?.is_absent_today && (
                   <p className="norm">
                     <Icon name="calendar" /> Сегодня вы в отгуле
@@ -79,10 +66,7 @@ export function HomePage({ user }: { user: Profile }) {
                     <div className="actions">
                       <button
                         className="btn"
-                        onClick={() =>
-                          data.digest &&
-                          go({ page: "chat", id: data.digest.chat_id })
-                        }
+                        onClick={() => data.digest && go({ page: 'chat', id: data.digest.chat_id })}
                       >
                         Продолжить
                       </button>
@@ -105,9 +89,7 @@ export function HomePage({ user }: { user: Profile }) {
                       <button
                         className="btn primary"
                         disabled={assistant.pending}
-                        onClick={() =>
-                          ask(`Помоги с шагом «${data.next_step?.title}»`)
-                        }
+                        onClick={() => ask(`Помоги с шагом «${data.next_step?.title}»`)}
                       >
                         Спросить ассистента
                       </button>
@@ -130,17 +112,19 @@ export function HomePage({ user }: { user: Profile }) {
                 {data.stages.map((stage) => (
                   <li className={`stage ${stage.state}`} key={stage.id}>
                     <span className="bar">
-                      {stage.state === "current" && (
+                      {stage.state === 'current' && (
                         <i
-                          style={{ width: `${(stage.progress ?? 0) * 100}%` }}
+                          style={{
+                            width: `${(stage.progress ?? 0) * 100}%`,
+                          }}
                         />
                       )}
                     </span>
                     <span>
-                      {stage.state === "done" && <Icon name="check" />}
+                      {stage.state === 'done' && <Icon name="check" />}
                       {stage.label}
                     </span>
-                    {stage.state === "current" && (
+                    {stage.state === 'current' && (
                       <span className="here">Вы здесь · день {data.day}</span>
                     )}
                   </li>
@@ -160,11 +144,10 @@ export function HomePage({ user }: { user: Profile }) {
                   <button
                     key={task.id}
                     className="sb-link"
-                    onClick={() => go({ page: "task", id: task.id })}
+                    onClick={() => go({ page: 'task', id: task.id })}
                   >
                     <Icon name="folder" />
-                    {task.title} · {taskLabels[task.status]} ·{" "}
-                    {dateLabel(task.deadline)}
+                    {task.title} · {taskLabels[task.status]} · {dateLabel(task.deadline)}
                   </button>
                 ))}
               </section>

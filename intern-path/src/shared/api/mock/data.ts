@@ -1,22 +1,22 @@
-import original from "./prototype-data.json";
-import { z } from "zod";
-import * as schema from "../contracts";
+import original from './prototype-data.json';
+import { z } from 'zod';
+import * as schema from '../contracts';
 
 export const now = () => new Date().toISOString();
 export const uid = () => crypto.randomUUID();
 export const intro =
-  "Здесь можно задавать любые вопросы. Ваши чаты и вопросы видите только вы. Наставник видит прогресс чек-листа и статусы задач.";
+  'Здесь можно задавать любые вопросы. Ваши чаты и вопросы видите только вы. Наставник видит прогресс чек-листа и статусы задач.';
 export const labels = {
-  new: "Новая",
-  in_progress: "В работе",
-  review: "На ревью",
-  done: "Закрыта в трекере",
+  new: 'Новая',
+  in_progress: 'В работе',
+  review: 'На ревью',
+  done: 'Закрыта в трекере',
 };
 export const users = schema.userChoice.array().parse(
   Object.values(original.USERS).map((user) => ({
     ...user,
-    title: { intern: "Стажёр", mentor: "Наставник", lead: "Лид" }[user.role],
-    can_login: user.role !== "lead",
+    title: { intern: 'Стажёр', mentor: 'Наставник', lead: 'Лид' }[user.role],
+    can_login: user.role !== 'lead',
   })),
 );
 export const people = original.PEOPLE;
@@ -31,19 +31,17 @@ export const docs = Object.entries(original.DOCS).map(
 );
 export const stages = original.STAGES;
 export const activeStage = (day: number) =>
-  stages.find((stage) => stage.from <= day && stage.to >= day) ??
-  stages[stages.length - 1];
+  stages.find((stage) => stage.from <= day && stage.to >= day) ?? stages[stages.length - 1];
 export const stageNotes: Record<string, string> = original.NORM;
 export const suggestions: Record<string, string[]> = original.SUGGEST;
 export const help: Record<string, string> = original.HELP;
 export const phrases: Record<string, string> = original.ONE2ONE;
-const practiceCatalog: Record<string, { label: string; items: string[][] }> =
-  original.PRACTICE;
+const practiceCatalog: Record<string, { label: string; items: string[][] }> = original.PRACTICE;
 const stepId = (id: string, topic?: string | null, stage?: string) =>
-  topic === "access" && stage === "w24"
-    ? "w24-access"
-    : topic === "grafana" && stage === "w24"
-      ? "w24-grafana"
+  topic === 'access' && stage === 'w24'
+    ? 'w24-access'
+    : topic === 'grafana' && stage === 'w24'
+      ? 'w24-grafana'
       : id;
 export const steps = original.STEPS.map((step) => ({
   ...step,
@@ -51,10 +49,10 @@ export const steps = original.STEPS.map((step) => ({
   seedId: step.id,
 }));
 export const askFor: Record<string, string> = {
-  access: "Как запросить доступ к Jira-проекту PAY?",
-  grafana: "Где смотреть логи и метрики Billing?",
-  git: "Как создать dev-ветку?",
-  stand: "Как получить доступ к тестовому стенду?",
+  access: 'Как запросить доступ к Jira-проекту PAY?',
+  grafana: 'Где смотреть логи и метрики Billing?',
+  git: 'Как создать dev-ветку?',
+  stand: 'Как получить доступ к тестовому стенду?',
 };
 
 export function practiceFor(stepId: string, topic: string) {
@@ -69,7 +67,7 @@ export function practiceFor(stepId: string, topic: string) {
       topic,
       task,
       criterion,
-      status: "open" as const,
+      status: 'open' as const,
       created_at: now(),
     })),
   };
@@ -78,9 +76,8 @@ export const nextStep = (data: InternData) => {
   const current = activeStage(data.day);
   const step = steps.find(
     (step) =>
-      stages.findIndex((stage) => stage.id === step.stage) >=
-        stages.indexOf(current) &&
-      !["done", "hidden"].includes(data.steps[step.id]),
+      stages.findIndex((stage) => stage.id === step.stage) >= stages.indexOf(current) &&
+      !['done', 'hidden'].includes(data.steps[step.id]),
   );
   return step
     ? {
@@ -88,48 +85,48 @@ export const nextStep = (data: InternData) => {
         title: step.title,
         topic: step.topic,
         status: data.steps[step.id],
-        note: "Шаблон. В вашей команде может отличаться.",
+        note: 'Шаблон. В вашей команде может отличаться.',
       }
     : null;
 };
 export const fields: schema.Field[] = [
-  { key: "project_key", label: "Проект", type: "text", required: true },
+  { key: 'project_key', label: 'Проект', type: 'text', required: true },
   {
-    key: "level",
-    label: "Уровень доступа",
-    type: "enum",
-    options: ["read", "write", "administration"],
+    key: 'level',
+    label: 'Уровень доступа',
+    type: 'enum',
+    options: ['read', 'write', 'administration'],
     required: true,
   },
   {
-    key: "justification",
-    label: "Обоснование",
-    type: "textarea",
+    key: 'justification',
+    label: 'Обоснование',
+    type: 'textarea',
     required: true,
   },
-  { key: "space_or_page", label: "Пространство / страница", type: "text" },
-  { key: "watch_issue_types", label: "Типы задач", type: "list" },
-  { key: "cost_center", label: "Центр затрат", type: "text" },
+  { key: 'space_or_page', label: 'Пространство / страница', type: 'text' },
+  { key: 'watch_issue_types', label: 'Типы задач', type: 'list' },
+  { key: 'cost_center', label: 'Центр затрат', type: 'text' },
 ];
 export const defaults = {
-  project_key: "PAY",
-  level: "read",
-  justification: "Для работы с задачами команды Payments.",
-  space_or_page: "Payments / Платёжный модуль",
-  watch_issue_types: ["Bug", "Story"],
-  cost_center: "CC-PAY-01",
+  project_key: 'PAY',
+  level: 'read',
+  justification: 'Для работы с задачами команды Payments.',
+  space_or_page: 'Payments / Платёжный модуль',
+  watch_issue_types: ['Bug', 'Story'],
+  cost_center: 'CC-PAY-01',
 };
 export const absenceFields: schema.Field[] = [
-  { key: "date_from", label: "Начало", type: "date", required: true },
-  { key: "date_to", label: "Окончание", type: "date", required: true },
+  { key: 'date_from', label: 'Начало', type: 'date', required: true },
+  { key: 'date_to', label: 'Окончание', type: 'date', required: true },
   {
-    key: "kind",
-    label: "Тип",
-    type: "enum",
-    options: ["day_off", "vacation"],
+    key: 'kind',
+    label: 'Тип',
+    type: 'enum',
+    options: ['day_off', 'vacation'],
     required: true,
   },
-  { key: "reason", label: "Причина", type: "textarea", required: true },
+  { key: 'reason', label: 'Причина', type: 'textarea', required: true },
 ];
 export function personCard(
   personId: keyof typeof people,
@@ -144,7 +141,7 @@ export function personCard(
     reason: person.reason,
     handle: `@${person.id}`,
     how_to_ask: `${person.first}, добрый день! Подскажите, пожалуйста, где найти инструкцию и что проверить в первую очередь?`,
-    duration: "обычно 20 минут",
+    duration: 'обычно 20 минут',
     ...extra,
   };
 }
@@ -158,14 +155,14 @@ export function createAction(
   const action: schema.Action = {
     id: uid(),
     type,
-    status: "draft",
+    status: 'draft',
     external_status: null,
     payload,
     chat_id,
     message_id,
-    approver_id: "maria",
-    approver_name: "Мария К., тимлид Payments",
-    timeline: [{ status: "draft", text: "Черновик", at: now() }],
+    approver_id: 'maria',
+    approver_name: 'Мария К., тимлид Payments',
+    timeline: [{ status: 'draft', text: 'Черновик', at: now() }],
     created_at: now(),
   };
   data.actions.unshift(action);
@@ -175,31 +172,28 @@ export function conflictCard(action: schema.Action) {
   return {
     action_id: action.id,
     draft_message: String(action.payload.text),
-    note: "Сначала показываю версию команды.",
+    note: 'Сначала показываю версию команды.',
     variants: [
       {
-        document_id: "stand-team",
-        source: "Инструкция команды Payments",
-        url: "https://confluence.example.com/stand-team",
-        date: "2026-10-28",
+        document_id: 'stand-team',
+        source: 'Инструкция команды Payments',
+        url: 'https://confluence.example.com/stand-team',
+        date: '2026-10-28',
         team_version: true,
-        steps: [
-          "Запросите доступ через заявку в PAY.",
-          "Уточните стенд у DevOps.",
-        ],
+        steps: ['Запросите доступ через заявку в PAY.', 'Уточните стенд у DevOps.'],
       },
       {
-        document_id: "stand-general",
-        source: "Общая инструкция",
-        url: "https://confluence.example.com/stand-general",
-        date: "2025-03-14",
+        document_id: 'stand-general',
+        source: 'Общая инструкция',
+        url: 'https://confluence.example.com/stand-general',
+        date: '2025-03-14',
         team_version: false,
-        steps: ["Запросите доступ у администратора стенда."],
+        steps: ['Запросите доступ у администратора стенда.'],
       },
     ],
     recipients: [
-      { id: "oleg", name: "Олег Р.", role: "Владелец документа" },
-      { id: "boris", name: "Борис Н.", role: "Наставник" },
+      { id: 'oleg', name: 'Олег Р.', role: 'Владелец документа' },
+      { id: 'boris', name: 'Борис Н.', role: 'Наставник' },
     ],
   };
 }
@@ -227,9 +221,8 @@ const databaseSchema = z.object({
   failNext: z.boolean(),
 });
 export type Database = z.infer<typeof databaseSchema>;
-export type InternId = "anya" | "dima";
-export const isIntern = (id: string): id is InternId =>
-  id === "anya" || id === "dima";
+export type InternId = 'anya' | 'dima';
+export const isIntern = (id: string): id is InternId => id === 'anya' || id === 'dima';
 
 function seed(intern: InternId): InternData {
   const source = original.seed.data[intern];
@@ -242,7 +235,7 @@ function seed(intern: InternId): InternData {
       id: chat.id,
       title: chat.title,
       task_id: chat.taskId,
-      mode: "guide",
+      mode: 'guide',
       include_in_journal: chat.includeInJournal,
       unresolved: chat.unresolved,
       created_at: chat.createdAt,
@@ -257,31 +250,31 @@ function seed(intern: InternId): InternData {
       chat.messages.map((message) => ({
         id: message.id,
         chat_id: chat.id,
-        role: message.role === "ai" ? "assistant" : "user",
+        role: message.role === 'ai' ? 'assistant' : 'user',
         content: message.text,
         created_at: message.at,
         steps: message.steps,
         guide:
-          "guide" in message && message.guide
+          'guide' in message && message.guide
             ? { ...message.guide, topic: message.topic }
             : undefined,
         route: message.route,
-        feedback: "feedback" in message ? message.feedback : undefined,
+        feedback: 'feedback' in message ? message.feedback : undefined,
         sources: message.blocks?.flatMap((block) =>
-          block.type === "sources"
+          block.type === 'sources'
             ? docs.filter((doc) => block.ids?.includes(doc.document_id))
             : [],
         ),
         blocks: message.blocks?.flatMap<schema.Payload>((block) => {
           if (
-            block.type === "person" &&
-            "pid" in block &&
+            block.type === 'person' &&
+            'pid' in block &&
             block.pid &&
             Object.hasOwn(people, block.pid)
           )
             return [
               {
-                type: "person_card",
+                type: 'person_card',
                 ...personCard(block.pid as keyof typeof people, {
                   how_to_ask: block.ask,
                   reason: block.reason,
@@ -299,8 +292,7 @@ function seed(intern: InternId): InternData {
       person_id: contact.pid,
       how_to_ask: contact.how,
       source_chat_id: contact.source,
-      source_chat_title: source.chats.find((chat) => chat.id === contact.source)
-        ?.title,
+      source_chat_title: source.chats.find((chat) => chat.id === contact.source)?.title,
       created_at: contact.at,
     })),
     entries: source.journal.map((entry) => ({
@@ -308,9 +300,7 @@ function seed(intern: InternId): InternData {
       source_chat_id: entry.chatId,
       source_chat_title: entry.chatTitle,
       chat_deleted: false,
-      source_label: entry.chatTitle
-        ? `Из чата «${entry.chatTitle}»`
-        : "Добавлено вручную",
+      source_label: entry.chatTitle ? `Из чата «${entry.chatTitle}»` : 'Добавлено вручную',
       include_in_export: entry.export,
       shared_with_mentor: false,
       created_at: entry.at,
@@ -322,7 +312,7 @@ function seed(intern: InternId): InternData {
     steps: Object.fromEntries(
       steps.map((step) => [
         step.id,
-        source.steps[step.seedId as keyof typeof source.steps] ?? "todo",
+        source.steps[step.seedId as keyof typeof source.steps] ?? 'todo',
       ]),
     ),
     practice: [],
@@ -331,42 +321,39 @@ function seed(intern: InternId): InternData {
     log: source.accessLog.map((record) => ({
       viewer_name: record.who,
       resource: record.what,
-      decision: "allow",
+      decision: 'allow',
       created_at: record.at,
     })),
   });
   const conflictMessage = data.messages.find(
     (message) =>
-      message.role === "assistant" &&
-      data.chats.find((chat) => chat.id === message.chat_id)?.title ===
-        "Доступ к тестовому стенду",
+      message.role === 'assistant' &&
+      data.chats.find((chat) => chat.id === message.chat_id)?.title === 'Доступ к тестовому стенду',
   );
   if (conflictMessage) {
     const action = createAction(
       data,
-      "doc_conflict_report",
+      'doc_conflict_report',
       {
-        text: "Здравствуйте! В двух инструкциях по доступу к стенду указан разный порядок. Какой действует сейчас?",
+        text: 'Здравствуйте! В двух инструкциях по доступу к стенду указан разный порядок. Какой действует сейчас?',
       },
       conflictMessage.chat_id,
       conflictMessage.id,
     );
     conflictMessage.blocks = [
       ...(conflictMessage.blocks ?? []),
-      { type: "conflict", ...conflictCard(action) },
+      { type: 'conflict', ...conflictCard(action) },
     ];
   }
   return data;
 }
-const key = "intern-path-mock-v1";
+const key = 'intern-path-mock-v1';
 export function fresh(): Database {
-  return { anya: seed("anya"), dima: seed("dima"), failNext: false };
+  return { anya: seed('anya'), dima: seed('dima'), failNext: false };
 }
 function load() {
   try {
-    const parsed = databaseSchema.safeParse(
-      JSON.parse(localStorage.getItem(key) ?? "null"),
-    );
+    const parsed = databaseSchema.safeParse(JSON.parse(localStorage.getItem(key) ?? 'null'));
     if (parsed.success) return parsed.data;
   } catch {
     /* Storage can be disabled. */
@@ -386,7 +373,7 @@ export function reset() {
   save();
 }
 export function profile(user: (typeof users)[number]): schema.Profile {
-  const base = { ...user, team_id: "payments" };
+  const base = { ...user, team_id: 'payments' };
   if (!isIntern(user.id)) return base;
   const data = database[user.id];
   return {
@@ -420,7 +407,7 @@ export function notify(
   data: InternData,
   kind: string,
   text: string,
-  target: schema.Notification["target"],
+  target: schema.Notification['target'],
 ) {
   data.notifications.unshift({
     id: uid(),

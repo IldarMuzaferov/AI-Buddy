@@ -1,27 +1,21 @@
-import { useEffect, useState } from "react";
-import { useApi, useData, useUpdate } from "@/entities/session/api/client";
-import {
-  dateLabel,
-  ErrorText,
-  Glyph,
-  Icon,
-  QueryState,
-} from "@/shared/ui/common";
+import { useEffect, useState } from 'react';
+import { useApi, useData, useUpdate } from '@/entities/session/api/client';
+import { dateLabel, ErrorText, Glyph, Icon, QueryState } from '@/shared/ui/common';
 
 const columns: Record<string, string> = {
-  intern: "Вы",
-  mentor: "Наставник",
-  lead: "Лид",
-  hr: "HR",
-  ai_provider: "Провайдер ИИ",
+  intern: 'Вы',
+  mentor: 'Наставник',
+  lead: 'Лид',
+  hr: 'HR',
+  ai_provider: 'Провайдер ИИ',
 };
 export function PrivacyPage() {
   const api = useApi(),
     update = useUpdate(),
-    privacy = useData(["privacy"], api.privacy.get);
-  const [clearResult, setClearResult] = useState("");
+    privacy = useData(['privacy'], api.privacy.get);
+  const [clearResult, setClearResult] = useState('');
   useEffect(() => {
-    void api.system.event("privacy_opened").catch(() => undefined);
+    void api.system.event('privacy_opened').catch(() => undefined);
   }, [api]);
   return (
     <div className="page">
@@ -42,8 +36,8 @@ export function PrivacyPage() {
                 <h3>Наставнику</h3>
                 <p>
                   {data.checklist_visible_to_mentor_by_default
-                    ? "Прогресс чек-листа и статусы задач."
-                    : "Статусы задач."}
+                    ? 'Прогресс чек-листа и статусы задач.'
+                    : 'Статусы задач.'}
                 </p>
               </section>
               <section className="ps-card opt">
@@ -71,15 +65,15 @@ export function PrivacyPage() {
                       <th scope="row">{row.data}</th>
                       {data.columns.map((column) => (
                         <td key={column}>
-                          {row[column] === "yes" ? (
+                          {row[column] === 'yes' ? (
                             <span className="yes">
                               <Icon name="check" />
                               Да
                             </span>
-                          ) : row[column] === "no" ? (
+                          ) : row[column] === 'no' ? (
                             <span className="no">Нет</span>
                           ) : (
-                            (row[column] ?? "—")
+                            (row[column] ?? '—')
                           )}
                         </td>
                       ))}
@@ -99,13 +93,11 @@ export function PrivacyPage() {
                 ))}
               </ol>
               <p className="muted">
-                Провайдер ИИ:{" "}
-                {data.ai_provider.mode === "fake"
-                  ? "имитация"
-                  : data.ai_provider.mode}
+                Провайдер ИИ:{' '}
+                {data.ai_provider.mode === 'fake' ? 'имитация' : data.ai_provider.mode}
                 {data.ai_provider.host && ` · ${data.ai_provider.host}`}
                 {data.ai_provider.model && ` · ${data.ai_provider.model}`}
-                {data.ai_provider.external && " · внешний сервис"}
+                {data.ai_provider.external && ' · внешний сервис'}
               </p>
             </section>
             <section className="panel">
@@ -115,9 +107,7 @@ export function PrivacyPage() {
                   type="checkbox"
                   checked={data.settings.share_topics}
                   disabled={update.isPending}
-                  onChange={(event) =>
-                    update.mutate(() => api.privacy.set(event.target.checked))
-                  }
+                  onChange={(event) => update.mutate(() => api.privacy.set(event.target.checked))}
                 />
                 Показывать тему наставнику
               </label>
@@ -127,14 +117,12 @@ export function PrivacyPage() {
                 onClick={() => {
                   if (
                     window.confirm(
-                      "Удалить все чаты и вложения? Записи журнала и знакомства сохранятся.",
+                      'Удалить все чаты и вложения? Записи журнала и знакомства сохранятся.',
                     )
                   )
                     update.mutate(async () => {
                       const result = await api.privacy.clear();
-                      setClearResult(
-                        `Удалено чатов: ${result.deleted}. ${result.kept}`,
-                      );
+                      setClearResult(`Удалено чатов: ${result.deleted}. ${result.kept}`);
                     });
                 }}
               >
@@ -149,12 +137,10 @@ export function PrivacyPage() {
                 <ul className="log-list">
                   {data.access_log.map((row, index) => (
                     <li key={index}>
-                      <Icon
-                        name={row.decision === "allow" ? "check" : "lock"}
-                      />
+                      <Icon name={row.decision === 'allow' ? 'check' : 'lock'} />
                       <span>
-                        {row.viewer_name} · {row.resource} ·{" "}
-                        {row.decision === "allow" ? "Разрешено" : "Отказано"}
+                        {row.viewer_name} · {row.resource} ·{' '}
+                        {row.decision === 'allow' ? 'Разрешено' : 'Отказано'}
                         {row.reason && ` · ${row.reason}`}
                       </span>
                       <time>{dateLabel(row.created_at)}</time>

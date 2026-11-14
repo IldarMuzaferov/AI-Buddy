@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useApi, useData, useUpdate } from "@/entities/session/api/client";
-import type { Chat, JournalEntry } from "@/shared/api/contracts";
+import { useState } from 'react';
+import { useApi, useData, useUpdate } from '@/entities/session/api/client';
+import type { Chat, JournalEntry } from '@/shared/api/contracts';
 import {
   dateLabel,
   Dialog,
@@ -10,27 +10,18 @@ import {
   formText,
   Icon,
   QueryState,
-} from "@/shared/ui/common";
-import { useNavigation } from "@/shared/ui/navigation";
+} from '@/shared/ui/common';
+import { useNavigation } from '@/shared/ui/navigation';
 
-function EntryForm({
-  entry,
-  onClose,
-}: {
-  entry?: JournalEntry;
-  onClose: () => void;
-}) {
+function EntryForm({ entry, onClose }: { entry?: JournalEntry; onClose: () => void }) {
   const api = useApi(),
     update = useUpdate();
   return (
-    <Dialog
-      title={entry ? "Редактировать запись" : "Новая запись"}
-      onClose={onClose}
-    >
+    <Dialog title={entry ? 'Редактировать запись' : 'Новая запись'} onClose={onClose}>
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          const text = formText(new FormData(event.currentTarget), "text");
+          const text = formText(new FormData(event.currentTarget), 'text');
           if (!text) return;
           update.mutate(async () => {
             if (entry) await api.journal.edit(entry.id, { text });
@@ -41,13 +32,7 @@ function EntryForm({
       >
         <label className="field">
           Что удалось сделать?
-          <textarea
-            name="text"
-            autoFocus
-            rows={5}
-            required
-            defaultValue={entry?.text}
-          />
+          <textarea name="text" autoFocus rows={5} required defaultValue={entry?.text} />
         </label>
         <ErrorText error={update.error} />
         <button className="btn primary" disabled={update.isPending}>
@@ -63,20 +48,14 @@ interface Suggestion {
   chat_title: string;
   selected: boolean;
 }
-function SuggestionsForm({
-  chats,
-  onClose,
-}: {
-  chats: Chat[];
-  onClose: () => void;
-}) {
+function SuggestionsForm({ chats, onClose }: { chats: Chat[]; onClose: () => void }) {
   const api = useApi(),
     update = useUpdate();
   const [chatIds, setChatIds] = useState(() =>
     chats.filter((chat) => chat.include_in_journal).map((chat) => chat.id),
   );
   const [suggestions, setSuggestions] = useState<Suggestion[]>(),
-    [emptyText, setEmptyText] = useState("");
+    [emptyText, setEmptyText] = useState('');
   return (
     <Dialog title="Собрать записи из чатов" onClose={onClose}>
       <ErrorText error={update.error} />
@@ -106,10 +85,8 @@ function SuggestionsForm({
             onClick={() =>
               update.mutate(async () => {
                 const result = await api.journal.suggest(chatIds);
-                setSuggestions(
-                  result.items.map((item) => ({ ...item, selected: true })),
-                );
-                setEmptyText(result.empty_text ?? "");
+                setSuggestions(result.items.map((item) => ({ ...item, selected: true })));
+                setEmptyText(result.empty_text ?? '');
               })
             }
           >
@@ -118,9 +95,7 @@ function SuggestionsForm({
         </>
       ) : (
         <>
-          {!suggestions.length && (
-            <p>{emptyText || "Подходящих записей пока нет."}</p>
-          )}
+          {!suggestions.length && <p>{emptyText || 'Подходящих записей пока нет.'}</p>}
           {suggestions.map((item, index) => (
             <div className="panel" key={index}>
               <label className="selection-item">
@@ -131,7 +106,10 @@ function SuggestionsForm({
                     setSuggestions((current) =>
                       current?.map((suggestion, position) =>
                         position === index
-                          ? { ...suggestion, selected: event.target.checked }
+                          ? {
+                              ...suggestion,
+                              selected: event.target.checked,
+                            }
                           : suggestion,
                       ),
                     )
@@ -164,8 +142,7 @@ function SuggestionsForm({
             <button
               className="btn primary"
               disabled={
-                update.isPending ||
-                !suggestions.some((item) => item.selected && item.text.trim())
+                update.isPending || !suggestions.some((item) => item.selected && item.text.trim())
               }
               onClick={() =>
                 update.mutate(async () => {
@@ -189,13 +166,7 @@ function SuggestionsForm({
     </Dialog>
   );
 }
-function ExportForm({
-  initialText,
-  onClose,
-}: {
-  initialText: string;
-  onClose: () => void;
-}) {
+function ExportForm({ initialText, onClose }: { initialText: string; onClose: () => void }) {
   const api = useApi(),
     update = useUpdate();
   return (
@@ -207,10 +178,10 @@ function ExportForm({
           update.mutate(async () =>
             download(
               await api.journal.export({
-                text: formText(form, "text"),
-                title: formText(form, "title") || undefined,
+                text: formText(form, 'text'),
+                title: formText(form, 'title') || undefined,
               }),
-              "journal.pdf",
+              'journal.pdf',
             ),
           );
         }}
@@ -236,43 +207,31 @@ export function JournalPage() {
   const api = useApi(),
     update = useUpdate(),
     go = useNavigation((state) => state.go);
-  const journal = useData(["journal"], api.journal.list),
-    chats = useData(["chats"], api.chats.list);
-  const [entry, setEntry] = useState<JournalEntry | "new">(),
+  const journal = useData(['journal'], api.journal.list),
+    chats = useData(['chats'], api.chats.list);
+  const [entry, setEntry] = useState<JournalEntry | 'new'>(),
     [suggest, setSuggest] = useState(false),
     [draft, setDraft] = useState<string>();
   const allChats = chats.data
-    ? [
-        ...chats.data.history,
-        ...chats.data.tasks.flatMap((folder) => folder.chats),
-      ]
+    ? [...chats.data.history, ...chats.data.tasks.flatMap((folder) => folder.chats)]
     : [];
   return (
     <div className="page">
       <h1>Журнал достижений</h1>
       <div className="actions section-actions">
-        <button className="btn primary" onClick={() => setEntry("new")}>
+        <button className="btn primary" onClick={() => setEntry('new')}>
           <Icon name="plus" />
           Добавить запись
         </button>
-        <button
-          className="btn"
-          disabled={!allChats.length}
-          onClick={() => setSuggest(true)}
-        >
+        <button className="btn" disabled={!allChats.length} onClick={() => setSuggest(true)}>
           Собрать из чатов
         </button>
         <button
           className="btn"
           disabled={
-            !journal.data?.entries.some((entry) => entry.include_in_export) ||
-            update.isPending
+            !journal.data?.entries.some((entry) => entry.include_in_export) || update.isPending
           }
-          onClick={() =>
-            update.mutate(async () =>
-              setDraft((await api.journal.draft([])).text),
-            )
-          }
+          onClick={() => update.mutate(async () => setDraft((await api.journal.draft([])).text))}
         >
           <Icon name="download" />
           Подготовить PDF
@@ -325,24 +284,20 @@ export function JournalPage() {
                       <button
                         className="btn small"
                         onClick={() =>
-                          entry.source_chat_id &&
-                          go({ page: "chat", id: entry.source_chat_id })
+                          entry.source_chat_id && go({ page: 'chat', id: entry.source_chat_id })
                         }
                       >
                         К чату
                       </button>
                     )}
-                    <button
-                      className="btn small"
-                      onClick={() => setEntry(entry)}
-                    >
+                    <button className="btn small" onClick={() => setEntry(entry)}>
                       Изменить
                     </button>
                     <button
                       className="btn small"
                       disabled={update.isPending}
                       onClick={() => {
-                        if (window.confirm("Удалить запись из журнала?"))
+                        if (window.confirm('Удалить запись из журнала?'))
                           update.mutate(() => api.journal.remove(entry.id));
                       }}
                     >
@@ -362,13 +317,11 @@ export function JournalPage() {
       </QueryState>
       {entry && (
         <EntryForm
-          entry={entry === "new" ? undefined : entry}
+          entry={entry === 'new' ? undefined : entry}
           onClose={() => setEntry(undefined)}
         />
       )}
-      {suggest && (
-        <SuggestionsForm chats={allChats} onClose={() => setSuggest(false)} />
-      )}
+      {suggest && <SuggestionsForm chats={allChats} onClose={() => setSuggest(false)} />}
       {draft !== undefined && (
         <ExportForm initialText={draft} onClose={() => setDraft(undefined)} />
       )}

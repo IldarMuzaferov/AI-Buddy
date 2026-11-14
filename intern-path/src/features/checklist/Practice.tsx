@@ -1,30 +1,26 @@
-import { useState } from "react";
-import { useApi, useData, useUpdate } from "@/entities/session/api/client";
-import type { PracticeItem } from "@/shared/api/contracts";
-import { ErrorText, Glyph, Icon, QueryState } from "@/shared/ui/common";
+import { useState } from 'react';
+import { useApi, useData, useUpdate } from '@/entities/session/api/client';
+import type { PracticeItem } from '@/shared/api/contracts';
+import { ErrorText, Glyph, Icon, QueryState } from '@/shared/ui/common';
 
 export function PracticeItems({ items }: { items: PracticeItem[] }) {
   const api = useApi(),
     update = useUpdate();
-  const list = useData(["practice"], api.practice.list);
+  const list = useData(['practice'], api.practice.list);
   return (
     <div className="practice-list">
       <ErrorText error={update.error} />
       {items.map((item) => {
-        const current =
-          list.data?.find((current) => current.id === item.id) ?? item;
+        const current = list.data?.find((current) => current.id === item.id) ?? item;
         return (
           <label className="selection-item" key={item.id}>
             <input
               type="checkbox"
-              checked={current.status === "done"}
+              checked={current.status === 'done'}
               disabled={update.isPending}
               onChange={(event) =>
                 update.mutate(() =>
-                  api.practice.set(
-                    item.id,
-                    event.target.checked ? "done" : "open",
-                  ),
+                  api.practice.set(item.id, event.target.checked ? 'done' : 'open'),
                 )
               }
             />
@@ -49,9 +45,7 @@ export function PracticeButton({ stepId }: { stepId: string }) {
         className="btn small"
         disabled={update.isPending}
         onClick={() =>
-          update.mutate(async () =>
-            setItems((await api.checklist.generate(stepId)).items),
-          )
+          update.mutate(async () => setItems((await api.checklist.generate(stepId)).items))
         }
       >
         <Icon name="list" />
@@ -64,7 +58,7 @@ export function PracticeButton({ stepId }: { stepId: string }) {
 }
 export function PracticePanel() {
   const api = useApi(),
-    practice = useData(["practice"], api.practice.list);
+    practice = useData(['practice'], api.practice.list);
   return (
     <details className="panel">
       <summary>Мои задания для практики</summary>
@@ -82,7 +76,7 @@ export function PracticePanel() {
 }
 export function Checklist() {
   const api = useApi(),
-    query = useData(["checklist"], api.checklist.list),
+    query = useData(['checklist'], api.checklist.list),
     update = useUpdate();
   return (
     <QueryState query={query}>
@@ -98,21 +92,15 @@ export function Checklist() {
               </summary>
               <ul className="steps-list">
                 {stage.steps.map((step) => (
-                  <li
-                    className={`step-row ${step.status === "done" ? "done" : ""}`}
-                    key={step.id}
-                  >
+                  <li className={`step-row ${step.status === 'done' ? 'done' : ''}`} key={step.id}>
                     <label className="step-check">
                       <input
                         type="checkbox"
-                        checked={step.status === "done"}
-                        disabled={step.status === "hidden" || update.isPending}
+                        checked={step.status === 'done'}
+                        disabled={step.status === 'hidden' || update.isPending}
                         onChange={(event) =>
                           update.mutate(() =>
-                            api.checklist.set(
-                              step.id,
-                              event.target.checked ? "done" : "todo",
-                            ),
+                            api.checklist.set(step.id, event.target.checked ? 'done' : 'todo'),
                           )
                         }
                       />
@@ -125,14 +113,12 @@ export function Checklist() {
                       onChange={(event) => {
                         const value = event.target.value;
                         if (
-                          value === "todo" ||
-                          value === "in_progress" ||
-                          value === "done" ||
-                          value === "hidden"
+                          value === 'todo' ||
+                          value === 'in_progress' ||
+                          value === 'done' ||
+                          value === 'hidden'
                         )
-                          update.mutate(() =>
-                            api.checklist.set(step.id, value),
-                          );
+                          update.mutate(() => api.checklist.set(step.id, value));
                       }}
                     >
                       <option value="todo">К выполнению</option>
@@ -140,7 +126,7 @@ export function Checklist() {
                       <option value="done">Готово</option>
                       <option value="hidden">Не про нашу команду</option>
                     </select>
-                    {step.has_practice && step.status !== "hidden" && (
+                    {step.has_practice && step.status !== 'hidden' && (
                       <PracticeButton stepId={step.id} />
                     )}
                   </li>
@@ -153,13 +139,7 @@ export function Checklist() {
     </QueryState>
   );
 }
-export function PracticeCard({
-  label,
-  items,
-}: {
-  label: string;
-  items: PracticeItem[];
-}) {
+export function PracticeCard({ label, items }: { label: string; items: PracticeItem[] }) {
   return (
     <section className="result-card neutral">
       <div className="result-kicker">

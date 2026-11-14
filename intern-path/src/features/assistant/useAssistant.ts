@@ -1,9 +1,9 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { create } from "zustand";
-import { useSession } from "@/entities/session/store";
-import { useApi } from "@/entities/session/api/client";
-import type { ReplyMode, StreamEvent } from "@/shared/api/contracts";
-import { useNavigation } from "@/shared/ui/navigation";
+import { useQueryClient } from '@tanstack/react-query';
+import { create } from 'zustand';
+import { useSession } from '@/entities/session/store';
+import { useApi } from '@/entities/session/api/client';
+import type { ReplyMode, StreamEvent } from '@/shared/api/contracts';
+import { useNavigation } from '@/shared/ui/navigation';
 
 interface StreamState {
   chatId: string | null;
@@ -18,7 +18,7 @@ interface StreamState {
 const initial: StreamState = {
   chatId: null,
   pending: false,
-  question: "",
+  question: '',
   events: [],
   error: null,
 };
@@ -65,8 +65,7 @@ export function useAssistant() {
     });
     try {
       await operation(controller, (event) => {
-        if (isCurrent())
-          useStream.setState((state) => ({ events: [...state.events, event] }));
+        if (isCurrent()) useStream.setState((state) => ({ events: [...state.events, event] }));
       });
       return true;
     } catch (error) {
@@ -84,21 +83,14 @@ export function useAssistant() {
     } finally {
       if (isCurrent()) {
         await cache.invalidateQueries({ queryKey: scope });
-        if (isCurrent())
-          useStream.setState({ pending: false, events: [], question: "" });
+        if (isCurrent()) useStream.setState({ pending: false, events: [], question: '' });
       }
     }
   }
 
   return {
     pending,
-    send(
-      question: string,
-      mode: ReplyMode,
-      file?: File,
-      chatId?: string,
-      taskId?: string,
-    ) {
+    send(question: string, mode: ReplyMode, file?: File, chatId?: string, taskId?: string) {
       const key = crypto.randomUUID();
       let targetId = chatId,
         attachmentIds: string[] = [];
@@ -110,13 +102,9 @@ export function useAssistant() {
             targetId = chat.id;
           }
           useStream.setState({ chatId: targetId });
-          go({ page: "chat", id: targetId });
+          go({ page: 'chat', id: targetId });
           if (file && !attachmentIds.length) {
-            const attachment = await api.chats.attach(
-              targetId,
-              file,
-              controller.signal,
-            );
+            const attachment = await api.chats.attach(targetId, file, controller.signal);
             attachmentIds = [attachment.id];
           }
           await api.chats.send(
@@ -130,10 +118,9 @@ export function useAssistant() {
         { chatId: chatId ?? null, question, filename: file?.name },
       );
     },
-    followUp(chatId: string, messageId: string, kind: "direct" | "retry") {
+    followUp(chatId: string, messageId: string, kind: 'direct' | 'retry') {
       return run(
-        (controller, onEvent) =>
-          api.chats.followUp(messageId, kind, onEvent, controller.signal),
+        (controller, onEvent) => api.chats.followUp(messageId, kind, onEvent, controller.signal),
         { chatId },
       );
     },

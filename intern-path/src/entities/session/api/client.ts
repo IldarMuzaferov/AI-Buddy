@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createApi } from "@/shared/api/endpoints";
-import { useSession } from "../store";
+import { useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createApi } from '@/shared/api/endpoints';
+import { useSession } from '../store';
 
 export function useApi() {
   const backend = useSession((state) => state.backend),

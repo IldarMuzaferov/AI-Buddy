@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
-import { useApi, useData } from "@/entities/session/api/client";
-import type { ReplyMode } from "@/shared/api/contracts";
-import { ErrorText, Icon } from "@/shared/ui/common";
-import { useAssistant, useStream } from "./useAssistant";
+import { useRef, useState } from 'react';
+import { useApi, useData } from '@/entities/session/api/client';
+import type { ReplyMode } from '@/shared/api/contracts';
+import { ErrorText, Icon } from '@/shared/ui/common';
+import { useAssistant, useStream } from './useAssistant';
 
 export function Composer({
   chatId,
@@ -15,27 +15,24 @@ export function Composer({
   initialMode?: ReplyMode;
   home?: boolean;
 }) {
-  const [text, setText] = useState(""),
+  const [text, setText] = useState(''),
     [file, setFile] = useState<File>(),
     [fileError, setFileError] = useState<string>();
   const [mode, setMode] = useState<ReplyMode>();
   const api = useApi(),
-    flags = useData(["flags"], api.system.flags);
+    flags = useData(['flags'], api.system.flags);
   const input = useRef<HTMLInputElement>(null);
   const assistant = useAssistant(),
     stream = useStream();
-  const effectiveMode =
-    mode ?? initialMode ?? flags.data?.guide_mode_default ?? "guide";
+  const effectiveMode = mode ?? initialMode ?? flags.data?.guide_mode_default ?? 'guide';
   function submit() {
     if (locked || assistant.pending || (!text.trim() && !file)) return;
-    void assistant
-      .send(text.trim(), effectiveMode, file, chatId)
-      .then((sent) => {
-        if (sent) {
-          setText("");
-          setFile(undefined);
-        }
-      });
+    void assistant.send(text.trim(), effectiveMode, file, chatId).then((sent) => {
+      if (sent) {
+        setText('');
+        setFile(undefined);
+      }
+    });
   }
   if (locked)
     return (
@@ -67,14 +64,14 @@ export function Composer({
           accept=".png,.jpg,.jpeg,.webp,.gif,.log,.txt"
           onChange={(event) => {
             const selected = event.target.files?.[0];
-            event.target.value = "";
+            event.target.value = '';
             if (!selected) return;
             if (selected.size > 5 * 1024 * 1024) {
-              setFileError("Размер файла превышает 5 МБ.");
+              setFileError('Размер файла превышает 5 МБ.');
               return;
             }
             if (!/\.(png|jpe?g|webp|gif|log|txt)$/i.test(selected.name)) {
-              setFileError("Поддерживаются PNG, JPEG, WebP, GIF, LOG и TXT.");
+              setFileError('Поддерживаются PNG, JPEG, WebP, GIF, LOG и TXT.');
               return;
             }
             setFileError(undefined);
@@ -87,18 +84,14 @@ export function Composer({
           maxLength={4000}
           placeholder={
             home
-              ? "Спросите, где что лежит, кто отвечает или как здесь принято"
-              : "Напишите вопрос…"
+              ? 'Спросите, где что лежит, кто отвечает или как здесь принято'
+              : 'Напишите вопрос…'
           }
           value={text}
           disabled={assistant.pending}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => {
-            if (
-              event.key === "Enter" &&
-              !event.shiftKey &&
-              !event.nativeEvent.isComposing
-            ) {
+            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
               event.preventDefault();
               submit();
             }
@@ -123,11 +116,7 @@ export function Composer({
           <Icon name="clip" />
           <strong>{file.name}</strong>
           <span>Не отправляйте пароли и токены.</span>
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => setFile(undefined)}
-          >
+          <button type="button" className="text-button" onClick={() => setFile(undefined)}>
             Убрать
           </button>
         </div>
@@ -136,16 +125,16 @@ export function Composer({
         <div className="segmented" role="group" aria-label="Режим ответа">
           <button
             type="button"
-            aria-pressed={effectiveMode === "guide"}
-            onClick={() => setMode("guide")}
+            aria-pressed={effectiveMode === 'guide'}
+            onClick={() => setMode('guide')}
           >
             <Icon name="compass" />
             Навести
           </button>
           <button
             type="button"
-            aria-pressed={effectiveMode === "direct"}
-            onClick={() => setMode("direct")}
+            aria-pressed={effectiveMode === 'direct'}
+            onClick={() => setMode('direct')}
           >
             <Icon name="bolt" />
             Сразу ответ
@@ -159,11 +148,7 @@ export function Composer({
         <>
           <ErrorText error={stream.error} />
           {stream.retry && (
-            <button
-              type="button"
-              className="btn small"
-              onClick={() => void stream.retry?.()}
-            >
+            <button type="button" className="btn small" onClick={() => void stream.retry?.()}>
               Повторить отправку
             </button>
           )}

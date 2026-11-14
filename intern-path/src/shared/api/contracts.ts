@@ -1,15 +1,15 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const text = z.string();
 const id = text.min(1);
 const optionalText = text.nullish();
 const date = text;
 const object = z.looseObject({});
-const role = z.enum(["intern", "mentor", "lead"]);
-export const replyMode = z.enum(["guide", "direct"]);
-export const stepStatus = z.enum(["todo", "in_progress", "done", "hidden"]);
-export const practiceStatus = z.enum(["open", "done"]);
-export const taskStatus = z.enum(["new", "in_progress", "review", "done"]);
+const role = z.enum(['intern', 'mentor', 'lead']);
+export const replyMode = z.enum(['guide', 'direct']);
+export const stepStatus = z.enum(['todo', 'in_progress', 'done', 'hidden']);
+export const practiceStatus = z.enum(['open', 'done']);
+export const taskStatus = z.enum(['new', 'in_progress', 'review', 'done']);
 export const stage = z.object({ id, label: text });
 export const userChoice = z.object({
   id,
@@ -78,9 +78,7 @@ export const notification = z.object({
   text,
   read: z.boolean().optional(),
   created_at: date,
-  target: z
-    .object({ route: text, id: optionalText, action_id: optionalText })
-    .nullish(),
+  target: z.object({ route: text, id: optionalText, action_id: optionalText }).nullish(),
 });
 export const notifications = z.object({
   unread: z.number(),
@@ -100,18 +98,14 @@ export const home = z.object({
   total_days: z.number(),
   stages: stage
     .extend({
-      state: z.enum(["done", "current", "next"]),
+      state: z.enum(['done', 'current', 'next']),
       progress: z.number().nullish(),
     })
     .array(),
   normalization_text: text,
-  digest: z
-    .object({ text, chat_id: id, chat_title: text, unresolved: z.boolean() })
-    .nullish(),
+  digest: z.object({ text, chat_id: id, chat_title: text, unresolved: z.boolean() }).nullish(),
   next_step: nextStep.nullish(),
-  tasks_today: task
-    .pick({ id: true, title: true, status: true, deadline: true })
-    .array(),
+  tasks_today: task.pick({ id: true, title: true, status: true, deadline: true }).array(),
   suggestions: text.array(),
   notifications: notification.array(),
   privacy_note: text,
@@ -177,21 +171,15 @@ export const field = z.object({
   key: id,
   label: text,
   type: text,
-  options: z
-    .array(z.union([text, z.object({ value: text, label: text.optional() })]))
-    .nullish(),
+  options: z.array(z.union([text, z.object({ value: text, label: text.optional() })])).nullish(),
   required: z.boolean().optional(),
 });
 export const payload = z.record(z.string(), z.unknown());
-export const actionType = z.enum([
-  "access_request",
-  "absence_request",
-  "doc_conflict_report",
-]);
+export const actionType = z.enum(['access_request', 'absence_request', 'doc_conflict_report']);
 export const action = z.object({
   id,
   type: actionType,
-  status: z.enum(["draft", "confirmed", "cancelled", "failed"]),
+  status: z.enum(['draft', 'confirmed', 'cancelled', 'failed']),
   external_id: optionalText,
   external_status: optionalText,
   payload,
@@ -241,7 +229,7 @@ export const guide = z.object({
 });
 export const attachment = z.object({
   id,
-  kind: z.enum(["image", "log"]),
+  kind: z.enum(['image', 'log']),
   filename: text,
   size: z.number().optional(),
   warning: optionalText,
@@ -249,7 +237,7 @@ export const attachment = z.object({
 export const message = z.object({
   id,
   chat_id: id,
-  role: z.enum(["user", "assistant"]),
+  role: z.enum(['user', 'assistant']),
   content: text,
   route: optionalText,
   mode: replyMode.nullish(),
@@ -258,7 +246,7 @@ export const message = z.object({
   steps: text.array().nullish(),
   guide: guide.nullish(),
   attachments: attachment.array().nullish(),
-  feedback: z.enum(["yes", "no"]).nullish(),
+  feedback: z.enum(['yes', 'no']).nullish(),
   created_at: date,
 });
 export const messages = z.object({
@@ -312,7 +300,7 @@ export const privacy = z.object({
       viewer_id: optionalText,
       viewer_name: text,
       resource: text,
-      decision: z.enum(["allow", "deny"]),
+      decision: z.enum(['allow', 'deny']),
       reason: optionalText,
       created_at: date,
     })
@@ -334,9 +322,7 @@ export const mentor = z.object({
       checklist: z.object({
         done: z.number(),
         total: z.number(),
-        current_stage: step
-          .pick({ id: true, title: true, status: true })
-          .array(),
+        current_stage: step.pick({ id: true, title: true, status: true }).array(),
       }),
       tasks: task.array(),
       access_requests: z
@@ -365,9 +351,7 @@ export const mentor = z.object({
           created_at: date,
         })
         .array(),
-      shared_journal: journalEntry
-        .pick({ id: true, text: true, created_at: true })
-        .array(),
+      shared_journal: journalEntry.pick({ id: true, text: true, created_at: true }).array(),
       help_template: text,
       one_to_one_phrase: text,
       topic: optionalText,
@@ -388,9 +372,7 @@ export const streamSchemas = {
   error: z.object({
     code: text,
     message: text,
-    fallback_person: z
-      .object({ person_id: id, name: text, role: text })
-      .nullish(),
+    fallback_person: z.object({ person_id: id, name: text, role: text }).nullish(),
   }),
   done: z.object({
     message_id: id,
