@@ -73,6 +73,7 @@ export function ChatPage({ id }: { id: string }) {
     end = useRef<HTMLDivElement>(null),
     followedChat = useRef<string>(null);
   const [rename, setRename] = useState(false),
+    [confirmDelete, setConfirmDelete] = useState(false),
     [title, setTitle] = useState('');
   useEffect(() => {
     if (!chat.data && !stream.pending) return;
@@ -108,13 +109,7 @@ export function ChatPage({ id }: { id: string }) {
                 className="icon-button"
                 aria-label="Удалить чат"
                 disabled={update.isPending || stream.pending}
-                onClick={() => {
-                  if (window.confirm('Удалить чат и его вложения?'))
-                    update.mutate(async () => {
-                      await api.chats.remove(id);
-                      go({ page: 'home' });
-                    });
-                }}
+                onClick={() => setConfirmDelete(true)}
               >
                 <Icon name="trash" />
               </button>
@@ -179,7 +174,7 @@ export function ChatPage({ id }: { id: string }) {
             }}
           >
             <label className="field">
-              Название
+              <span className="field-label">Название</span>
               <input
                 autoFocus
                 required
@@ -189,10 +184,21 @@ export function ChatPage({ id }: { id: string }) {
               />
             </label>
             <ErrorText error={update.error} />
-            <button className="btn primary" disabled={update.isPending}>
-              Сохранить
-            </button>
+            <div className="dialog-actions">
+              <button type="button" className="btn" onClick={() => setRename(false)}>Отмена</button>
+              <button className="btn primary" disabled={update.isPending}>Сохранить</button>
+            </div>
           </form>
+        </Dialog>
+      )}
+      {confirmDelete && (
+        <Dialog title="Удалить чат?" onClose={() => setConfirmDelete(false)}>
+          <p className="intro">Чат и все прикреплённые к нему файлы будут удалены без возможности восстановления. Записи, уже сохранённые в журнале, останутся.</p>
+          <ErrorText error={update.error} />
+          <div className="dialog-actions">
+            <button className="btn" type="button" onClick={() => setConfirmDelete(false)}>Отмена</button>
+            <button className="btn danger" type="button" disabled={update.isPending} onClick={() => update.mutate(async () => { await api.chats.remove(id); setConfirmDelete(false); go({ page: 'home' }); })}>Удалить чат и вложения</button>
+          </div>
         </Dialog>
       )}
     </div>

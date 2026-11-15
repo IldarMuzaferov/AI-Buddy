@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useApi, useData } from '@/entities/session/api/client';
 import type { ReplyMode } from '@/shared/api/contracts';
 import { ErrorText, Icon } from '@/shared/ui/common';
@@ -15,23 +15,21 @@ export function Composer({
   initialMode?: ReplyMode;
   home?: boolean;
 }) {
-  const [text, setText] = useState(''),
-    [file, setFile] = useState<File>(),
-    [fileError, setFileError] = useState<string>();
-  const [mode, setMode] = useState<ReplyMode>();
+  const [text, setText] = useState('');
   const api = useApi(),
     flags = useData(['flags'], api.system.flags);
-  const input = useRef<HTMLInputElement>(null);
   const assistant = useAssistant(),
     stream = useStream();
-  const effectiveMode = mode ?? initialMode ?? flags.data?.guide_mode_default ?? 'guide';
+  const directPrefix = /^(сразу ответ|ответь сразу|дай готовый ответ)\s*:/i;
+  const helperPrefix = /^(помоги|объясни|подскажи|научи|покажи|наведи)\s*:/i;
+  const effectiveMode: ReplyMode = directPrefix.test(text.trim())
+    ? 'direct'
+    : helperPrefix.test(text.trim()) ? 'guide' : initialMode ?? flags.data?.guide_mode_default ?? 'guide';
   function submit() {
-    if (locked || assistant.pending || (!text.trim() && !file)) return;
-    void assistant.send(text.trim(), effectiveMode, file, chatId).then((sent) => {
-      if (sent) {
-        setText('');
-        setFile(undefined);
-      }
+    if (locked || assistant.pending || !text.trim()) return;
+    const question = text.trim().replace(/^(сразу ответ|ответь сразу|дай готовый ответ|помоги|объясни|подскажи|научи|покажи|наведи)\s*:\s*/i, '');
+    void assistant.send(question, effectiveMode, undefined, chatId).then((sent) => {
+      if (sent) setText('');
     });
   }
   if (locked)
@@ -48,36 +46,6 @@ export function Composer({
       }}
     >
       <div className="question-box">
-        <button
-          type="button"
-          className="icon-button"
-          aria-label="Прикрепить изображение или лог"
-          disabled={assistant.pending}
-          onClick={() => input.current?.click()}
-        >
-          <Icon name="clip" />
-        </button>
-        <input
-          ref={input}
-          hidden
-          type="file"
-          accept=".png,.jpg,.jpeg,.webp,.gif,.log,.txt"
-          onChange={(event) => {
-            const selected = event.target.files?.[0];
-            event.target.value = '';
-            if (!selected) return;
-            if (selected.size > 5 * 1024 * 1024) {
-              setFileError('Размер файла превышает 5 МБ.');
-              return;
-            }
-            if (!/\.(png|jpe?g|webp|gif|log|txt)$/i.test(selected.name)) {
-              setFileError('Поддерживаются PNG, JPEG, WebP, GIF, LOG и TXT.');
-              return;
-            }
-            setFileError(undefined);
-            setFile(selected);
-          }}
-        />
         <textarea
           aria-label="Ваш вопрос"
           rows={1}
@@ -101,45 +69,12 @@ export function Composer({
           type="submit"
           className="btn primary send"
           aria-label="Отправить вопрос"
-          disabled={assistant.pending || (!text.trim() && !file)}
+          disabled={assistant.pending || !text.trim()}
         >
           <Icon name="up" />
         </button>
       </div>
-      {fileError && (
-        <p role="alert" className="inline-error">
-          {fileError}
-        </p>
-      )}
-      {file && (
-        <div className="attach-chip">
-          <Icon name="clip" />
-          <strong>{file.name}</strong>
-          <span>Не отправляйте пароли и токены.</span>
-          <button type="button" className="text-button" onClick={() => setFile(undefined)}>
-            Убрать
-          </button>
-        </div>
-      )}
       <div className="composer-meta">
-        <div className="segmented" role="group" aria-label="Режим ответа">
-          <button
-            type="button"
-            aria-pressed={effectiveMode === 'guide'}
-            onClick={() => setMode('guide')}
-          >
-            <Icon name="compass" />
-            Навести
-          </button>
-          <button
-            type="button"
-            aria-pressed={effectiveMode === 'direct'}
-            onClick={() => setMode('direct')}
-          >
-            <Icon name="bolt" />
-            Сразу ответ
-          </button>
-        </div>
         <span className="privacy-caption">
           <Icon name="shield" /> Ваши чаты видите только вы
         </span>

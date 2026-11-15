@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useApi, useData } from '@/entities/session/api/client';
+import { useApi, useData, useUpdate } from '@/entities/session/api/client';
 import { useSession } from '@/entities/session/store';
-import { Avatar, Icon, PROJECT_NAME, QueryState } from '@/shared/ui/common';
+import { Avatar, Dialog, ErrorText, Icon, PROJECT_NAME, QueryState } from '@/shared/ui/common';
 import { useNavigation, type Route } from '@/shared/ui/navigation';
 import type { Chat, Profile } from '@/shared/api/contracts';
 import { Notifications } from '@/features/notifications/Notifications';
@@ -28,6 +28,8 @@ export function Shell({ user, children }: { user: Profile; children: ReactNode }
   const [open, setOpen] = useState(false),
     [profile, setProfile] = useState(false);
   const [folders, setFolders] = useState<Record<string, boolean>>({});
+  const [deleteTarget, setDeleteTarget] = useState<Chat | null>(null);
+  const update = useUpdate();
   const isIntern = user.role === 'intern';
   const chats = useData(['chats'], api.chats.list, isIntern);
   function navigate(route: Route) {
@@ -44,6 +46,9 @@ export function Shell({ user, children }: { user: Profile; children: ReactNode }
           <Icon name="chat" />
           <span className="t">{chat.title}</span>
           {chat.unresolved && <span className="udot" title="Не решено" />}
+        </button>
+        <button className="icon-button sb-delete" aria-label={`Удалить чат «${chat.title}»`} onClick={() => setDeleteTarget(chat)}>
+          <Icon name="trash" />
         </button>
       </div>
     );
@@ -203,6 +208,16 @@ export function Shell({ user, children }: { user: Profile; children: ReactNode }
           <p className="sb-test">Тестовые данные, не регламенты Авито</p>
         </div>
       </aside>
+      {deleteTarget && (
+        <Dialog title="Удалить чат?" onClose={() => setDeleteTarget(null)}>
+          <p className="intro">«{deleteTarget.title}» и все вложения будут удалены без возможности восстановления. Сохранённые записи журнала останутся.</p>
+          <ErrorText error={update.error} />
+          <div className="dialog-actions">
+            <button className="btn" type="button" onClick={() => setDeleteTarget(null)}>Отмена</button>
+            <button className="btn danger" type="button" disabled={update.isPending} onClick={() => update.mutate(async () => { await api.chats.remove(deleteTarget.id); if (route.page === 'chat' && route.id === deleteTarget.id) go({ page: 'home' }); setDeleteTarget(null); })}>Удалить чат</button>
+          </div>
+        </Dialog>
+      )}
       <main className="main">
         <header className="topbar">
           <button

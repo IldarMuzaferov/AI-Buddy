@@ -908,6 +908,7 @@ p {
   line-height: 1.65;
   color: #777;
   margin-top: 14px;
+  margin-bottom: 18px;
   max-width: 620px;
 }
 .hero-visual {
@@ -1129,7 +1130,7 @@ p {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1;
+  /* flex: 1; */
   min-width: 220px;
   cursor: pointer;
   font-size: 14px;
@@ -1169,6 +1170,7 @@ p {
   padding: 9px 9px 9px 8px;
   border-radius: 17px;
   border: 1px solid transparent;
+  margin-top: 18px;
 }
 .question-box:focus-within {
   background: #f8f8f8;
@@ -1350,6 +1352,9 @@ p {
 #msgs {
   flex: 1;
   padding: 8px 0 10px;
+}
+.chat-messages{
+  flex: 1;
 }
 .msg-user {
   display: flex;
@@ -1791,6 +1796,10 @@ p {
   border-radius: 14px;
   padding: 16px 18px;
 }
+.field-label {
+  display: block;
+  margin-bottom: 10px;
+}
 .field label {
   display: block;
   font-size: 12px;
@@ -1961,9 +1970,11 @@ p {
   flex-shrink: 0;
   margin: 3px 0;
 }
-.selection-item > span {
+.selection-item > span,
+.selection-item > label {
   min-width: 0;
   flex: 1;
+  cursor: pointer;
 }
 .selection-item strong {
   font-size: 14px;
@@ -3087,4 +3098,29 @@ p {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* chat history actions and dialog spacing */
+.sb-row .sb-delete {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  margin-right: 4px;
+  opacity: 0;
+  color: #888;
+}
+.sb-row:hover .sb-delete,
+.sb-row.cur .sb-delete,
+.sb-row .sb-delete:focus-visible { opacity: 1; }
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+.dialog form .dialog-actions { padding-top: 4px; }
+.mode-hint { flex-basis: 100%; }
+@media (max-width: 700px) {
+  .sb-row .sb-delete { opacity: 1; }
 }

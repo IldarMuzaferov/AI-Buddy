@@ -367,12 +367,16 @@ async function route(url: URL, options: RequestOptions, token: string | null) {
       stage,
       day: data.day,
       total_days: 180,
-      stages: stages.map((item, i) => ({
-        ...item,
-        state: i < index ? 'done' : i === index ? 'current' : 'next',
-        progress:
-          i === index ? Math.min(1, (data.day - item.from + 1) / (item.to - item.from + 1)) : null,
-      })),
+      stages: stages.map((item, i) => {
+        const stageSteps = steps.filter((step) => step.stage === item.id);
+        const visibleSteps = stageSteps.filter((step) => data.steps[step.id] !== 'hidden');
+        const completed = visibleSteps.length > 0 && visibleSteps.every((step) => data.steps[step.id] === 'done');
+        const progress = visibleSteps.length
+          ? visibleSteps.filter((step) => data.steps[step.id] === 'done').length / visibleSteps.length
+          : i === index ? Math.min(1, (data.day - item.from + 1) / (item.to - item.from + 1)) : 0;
+        const state = completed || i < index ? 'done' : i === index ? 'current' : 'next';
+        return { ...item, state, progress: state === 'current' ? progress : null };
+      }),
       normalization_text: stageNotes[stage.id],
       digest: last
         ? {

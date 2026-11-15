@@ -13,8 +13,9 @@ export function PracticeItems({ items }: { items: PracticeItem[] }) {
       {items.map((item) => {
         const current = list.data?.find((current) => current.id === item.id) ?? item;
         return (
-          <label className="selection-item" key={item.id}>
+          <div className="selection-item" key={item.id}>
             <input
+              id={`practice-${item.id}`}
               type="checkbox"
               checked={current.status === 'done'}
               disabled={update.isPending}
@@ -24,11 +25,11 @@ export function PracticeItems({ items }: { items: PracticeItem[] }) {
                 )
               }
             />
-            <span>
+            <label htmlFor={`practice-${item.id}`}>
               <strong>{item.task}</strong>
               <small>Критерий: {item.criterion}</small>
-            </span>
-          </label>
+            </label>
+          </div>
         );
       })}
     </div>
@@ -95,6 +96,7 @@ export function Checklist() {
                   <li className={`step-row ${step.status === 'done' ? 'done' : ''}`} key={step.id}>
                     <label className="step-check">
                       <input
+                        id={`checklist-${step.id}`}
                         type="checkbox"
                         checked={step.status === 'done'}
                         disabled={step.status === 'hidden' || update.isPending}

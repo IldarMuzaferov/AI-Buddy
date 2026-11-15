@@ -60,20 +60,20 @@ function PersonCard({ person, chatId }: { person: schema.Person; chatId: string 
         <details>
           <summary>Как обратиться{person.duration && ` · ${person.duration}`}</summary>
           <p className="pre-line">{person.how_to_ask}</p>
-          {person.questions?.length && (
+          {(person.questions?.length ?? 0) > 0 && (
             <ul>
-              {person.questions.map((question) => (
+              {person.questions?.map((question) => (
                 <li key={question}>{question}</li>
               ))}
             </ul>
           )}
         </details>
       )}
-      {person.chain?.length && (
+      {(person.chain?.length ?? 0) > 0 && (
         <details>
           <summary>{person.chain_label || 'К кому ещё обратиться'}</summary>
           <ul>
-            {person.chain.map((item) => (
+            {person.chain?.map((item) => (
               <li key={item.id}>
                 {item.name} · {item.role}
               </li>
@@ -243,11 +243,11 @@ export function MessageRow({ message, locked }: { message: schema.Message; locke
         <Icon name="spark" />
       </div>
       <div className="answer-body">
-        {message.steps?.length && (
+        {(message.steps?.length ?? 0) > 0 && (
           <details className="answer-steps">
             <summary>Как искал ответ</summary>
             <ol>
-              {message.steps.map((step, index) => (
+              {message.steps?.map((step, index) => (
                 <li key={index}>{step}</li>
               ))}
             </ol>
