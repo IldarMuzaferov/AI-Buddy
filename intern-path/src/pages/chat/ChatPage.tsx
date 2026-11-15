@@ -120,13 +120,12 @@ export function ChatPage({ id }: { id: string }) {
               type="checkbox"
               checked={chat.data.chat.include_in_journal}
               disabled={update.isPending}
-              onChange={(event) =>
+              onChange={(event) => {
+                const checked = event.currentTarget.checked;
                 update.mutate(() =>
-                  api.chats.edit(id, {
-                    include_in_journal: event.target.checked,
-                  }),
-                )
-              }
+                  api.chats.edit(id, { include_in_journal: checked }),
+                );
+              }}
             />
             Учитывать в журнале
           </label>

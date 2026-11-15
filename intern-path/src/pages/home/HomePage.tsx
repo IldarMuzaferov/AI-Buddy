@@ -112,13 +112,11 @@ export function HomePage({ user }: { user: Profile }) {
                 {data.stages.map((stage) => (
                   <li className={`stage ${stage.state}`} key={stage.id}>
                     <span className="bar">
-                      {stage.state === 'current' && (
-                        <i
-                          style={{
-                            width: `${(stage.progress ?? 0) * 100}%`,
-                          }}
-                        />
-                      )}
+                      <i
+                        style={{
+                          width: `${(stage.progress ?? 0) * 100}%`,
+                        }}
+                      />
                     </span>
                     <span>
                       {stage.state === 'done' && <Icon name="check" />}

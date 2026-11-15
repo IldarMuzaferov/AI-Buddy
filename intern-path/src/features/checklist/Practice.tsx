@@ -19,11 +19,13 @@ export function PracticeItems({ items }: { items: PracticeItem[] }) {
               type="checkbox"
               checked={current.status === 'done'}
               disabled={update.isPending}
-              onChange={(event) =>
-                update.mutate(() =>
-                  api.practice.set(item.id, event.target.checked ? 'done' : 'open'),
-                )
-              }
+              onChange={(event) => {
+                // Read the DOM value synchronously. TanStack Query runs mutationFn
+                // after this handler, when React may already have restored the
+                // controlled checkbox value from the previous query result.
+                const checked = event.currentTarget.checked;
+                update.mutate(() => api.practice.set(item.id, checked ? 'done' : 'open'));
+              }}
             />
             <label htmlFor={`practice-${item.id}`}>
               <strong>{item.task}</strong>
@@ -100,11 +102,12 @@ export function Checklist() {
                         type="checkbox"
                         checked={step.status === 'done'}
                         disabled={step.status === 'hidden' || update.isPending}
-                        onChange={(event) =>
-                          update.mutate(() =>
-                            api.checklist.set(step.id, event.target.checked ? 'done' : 'todo'),
-                          )
-                        }
+                        onChange={(event) => {
+                          // Capture before mutate() defers the operation.
+                          const checked = event.currentTarget.checked;
+                          const nextStatus = checked ? 'done' : 'todo';
+                          update.mutate(() => api.checklist.set(step.id, nextStatus));
+                        }}
                       />
                       <span>{step.title}</span>
                     </label>

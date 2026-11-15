@@ -78,6 +78,13 @@ async def test_home_checklist_and_notifications(api):
     assert home["next_step"]["step_id"] == "w24-access" and home["suggestions"][0] == "Кто отвечает за сервис платежей?"
     assert [t["title"] for t in home["tasks_today"]] == ["Платёжный модуль"]
     assert [s["state"] for s in home["stages"]][:4] == ["done", "done", "done", "current"]
+    # Every stage bar reflects checklist completion, not only the active calendar stage.
+    assert home["stages"][2]["progress"] == 1.0
+    await api.patch("anya", "/api/checklist/w1-welcome", {"status": "todo"})
+    home = (await api.get("anya", "/api/home")).json()
+    assert home["stages"][2]["progress"] < 1.0
+    await api.patch("anya", "/api/checklist/w1-welcome", {"status": "done"})
+    assert (await api.get("anya", "/api/home")).json()["stages"][2]["progress"] == 1.0
     assert len(home["notifications"]) == 1
     checklist = (await api.get("anya", "/api/checklist")).json()
     current = next(s for s in checklist["stages"] if s["current"])

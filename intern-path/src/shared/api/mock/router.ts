@@ -375,7 +375,7 @@ async function route(url: URL, options: RequestOptions, token: string | null) {
           ? visibleSteps.filter((step) => data.steps[step.id] === 'done').length / visibleSteps.length
           : i === index ? Math.min(1, (data.day - item.from + 1) / (item.to - item.from + 1)) : 0;
         const state = completed || i < index ? 'done' : i === index ? 'current' : 'next';
-        return { ...item, state, progress: state === 'current' ? progress : null };
+        return { ...item, state, progress };
       }),
       normalization_text: stageNotes[stage.id],
       digest: last

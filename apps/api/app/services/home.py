@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.assistant.orchestrator import next_step
 from app.db import utcnow
 from app.domain import DEFAULT_SUGGESTIONS, NORMALIZATION, STAGES, SUGGESTIONS, today
-from app.models import Chat, Digest, InternStep, Notification, Task
+from app.models import Chat, ChecklistStep, Digest, InternStep, Notification, Task
 from app.services.common import InternContext
 
 
@@ -29,17 +29,36 @@ async def build_digest(session: AsyncSession, intern: InternContext) -> dict | N
     return {"text": text, **data}
 
 
-def stages_view(intern: InternContext) -> list[dict]:
-    idx = next(i for i, s in enumerate(STAGES) if s.id == intern.stage.id)
-    result = []
-    for i, s in enumerate(STAGES):
-        progress = None
-        if i == idx:
-            span = max(1, s.end - s.start + 1) if s.end < 9999 else max(1, intern.total - s.start + 1)
-            progress = round(min(1.0, max(0.0, (intern.day - s.start + 1) / span)), 2)
-        result.append({"id": s.id, "label": s.label, "state": "done" if i < idx else "current" if i == idx else "next", "progress": progress})
-    return result
+async def stages_view(session: AsyncSession, intern: InternContext) -> list[dict]:
+    """Progress is based on the intern's checklist statuses, not elapsed calendar time."""
+    idx = next(i for i, stage in enumerate(STAGES) if stage.id == intern.stage.id)
+    steps = (await session.execute(
+        select(ChecklistStep).order_by(ChecklistStep.order)
+    )).scalars().all()
+    statuses = {
+        row.step_id: row.status
+        for row in (await session.execute(
+            select(InternStep).where(InternStep.intern_id == intern.user.id)
+        )).scalars().all()
+    }
 
+    result = []
+    for i, stage in enumerate(STAGES):
+        stage_steps = [step for step in steps if step.stage == stage.id]
+        visible = [step for step in stage_steps if statuses.get(step.id, "todo") != "hidden"]
+        done = sum(1 for step in visible if statuses.get(step.id, "todo") == "done")
+        progress = round(done / len(visible), 2) if visible else 0.0
+        completed = bool(visible) and done == len(visible)
+        # Keep the calendar milestone state, but let the fill itself show
+        # actual checklist completion for every stage (including earlier ones).
+        state = "done" if completed or i < idx else "current" if i == idx else "next"
+        result.append({
+            "id": stage.id,
+            "label": stage.label,
+            "state": state,
+            "progress": progress,
+        })
+    return result
 
 async def home_view(session: AsyncSession, intern: InternContext) -> dict:
     step = await next_step(session, intern)
@@ -54,7 +73,7 @@ async def home_view(session: AsyncSession, intern: InternContext) -> dict:
     return {
         "stage": {"id": intern.stage.id, "label": intern.stage.label},
         "day": intern.day, "total_days": intern.total,
-        "stages": stages_view(intern),
+        "stages": await stages_view(session, intern),
         "normalization_text": NORMALIZATION[intern.stage.id],
         "digest": await build_digest(session, intern),
         "next_step": None if step is None else {"step_id": step.id, "title": step.title, "topic": step.topic, "status": step_status,

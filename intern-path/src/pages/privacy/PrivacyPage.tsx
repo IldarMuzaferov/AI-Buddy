@@ -107,7 +107,10 @@ export function PrivacyPage() {
                   type="checkbox"
                   checked={data.settings.share_topics}
                   disabled={update.isPending}
-                  onChange={(event) => update.mutate(() => api.privacy.set(event.target.checked))}
+                  onChange={(event) => {
+                    const checked = event.currentTarget.checked;
+                    update.mutate(() => api.privacy.set(checked));
+                  }}
                 />
                 Показывать тему наставнику
               </label>

@@ -1078,6 +1078,12 @@ p {
 .stage.done .bar {
   background: #bfe5cc;
 }
+.stage.done .bar i {
+  background: #5bb57f;
+}
+.stage.next .bar i {
+  background: #b8b8b8;
+}
 .stage.current {
   color: var(--ink);
   font-weight: 500;

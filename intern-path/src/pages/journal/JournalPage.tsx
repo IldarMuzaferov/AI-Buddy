@@ -67,13 +67,12 @@ function SuggestionsForm({ chats, onClose }: { chats: Chat[]; onClose: () => voi
                 <input
                   type="checkbox"
                   checked={chatIds.includes(chat.id)}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    const checked = event.currentTarget.checked;
                     setChatIds((current) =>
-                      event.target.checked
-                        ? [...current, chat.id]
-                        : current.filter((id) => id !== chat.id),
-                    )
-                  }
+                      checked ? [...current, chat.id] : current.filter((id) => id !== chat.id),
+                    );
+                  }}
                 />
                 <span>{chat.title}</span>
               </label>
@@ -102,18 +101,14 @@ function SuggestionsForm({ chats, onClose }: { chats: Chat[]; onClose: () => voi
                 <input
                   type="checkbox"
                   checked={item.selected}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    const checked = event.currentTarget.checked;
                     setSuggestions((current) =>
                       current?.map((suggestion, position) =>
-                        position === index
-                          ? {
-                              ...suggestion,
-                              selected: event.target.checked,
-                            }
-                          : suggestion,
+                        position === index ? { ...suggestion, selected: checked } : suggestion,
                       ),
-                    )
-                  }
+                    );
+                  }}
                 />
                 <span>{item.chat_title}</span>
               </label>
@@ -254,13 +249,12 @@ export function JournalPage() {
                       type="checkbox"
                       checked={entry.include_in_export}
                       disabled={update.isPending}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const checked = event.currentTarget.checked;
                         update.mutate(() =>
-                          api.journal.edit(entry.id, {
-                            include_in_export: event.target.checked,
-                          }),
-                        )
-                      }
+                          api.journal.edit(entry.id, { include_in_export: checked }),
+                        );
+                      }}
                     />
                     Включать в экспорт
                   </label>
@@ -269,13 +263,12 @@ export function JournalPage() {
                       type="checkbox"
                       checked={entry.shared_with_mentor}
                       disabled={update.isPending}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const checked = event.currentTarget.checked;
                         update.mutate(() =>
-                          api.journal.edit(entry.id, {
-                            shared_with_mentor: event.target.checked,
-                          }),
-                        )
-                      }
+                          api.journal.edit(entry.id, { shared_with_mentor: checked }),
+                        );
+                      }}
                     />
                     Показывать наставнику
                   </label>
