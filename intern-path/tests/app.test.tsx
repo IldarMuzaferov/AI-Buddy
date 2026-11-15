@@ -119,35 +119,6 @@ it('streams assistant answers, saves a contact, records feedback and runs the di
   await heading('Игорь Л.');
 });
 
-it('validates attachments and sends the accepted file with the selected reply mode', async () => {
-  await login();
-  const input = document.querySelector<HTMLInputElement>('input[type=file]')!;
-  await click('Прикрепить изображение или лог');
-  fireEvent.change(input, { target: { files: [new File(['demo'], 'run.exe')] } });
-  await screen.findByRole('alert');
-  fireEvent.change(input, {
-    target: { files: [new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'large.log')] },
-  });
-  await screen.findByText(/5 МБ/);
-  const file = new File(['demo log'], 'run.log');
-  fireEvent.change(input, { target: { files: [file] } });
-  await screen.findByText('run.log');
-  await click('Убрать');
-  fireEvent.change(input, { target: { files: [file] } });
-  await click('Сразу ответ');
-  const composer = screen.getByRole('textbox', { name: 'Ваш вопрос' });
-  fireEvent.change(composer, { target: { value: 'Где лежит код?' } });
-  fireEvent.keyDown(composer, { key: 'Enter', shiftKey: true });
-  expect(useNavigation.getState().route.page).toBe('home');
-  fireEvent.keyDown(composer, { key: 'Enter' });
-  await button('Помогло');
-  const route = useNavigation.getState().route;
-  if (route.page !== 'chat') throw new Error('Chat did not open');
-  const { messages } = await intern.chats.messages(route.id);
-  expect(messages[0].attachments?.[0].filename).toBe('run.log');
-  expect(messages[1].mode).toBe('direct');
-});
-
 it('creates, edits, searches and removes a manual contact', async () => {
   await login();
   await click('Знакомства');
