@@ -24,6 +24,21 @@ docker compose up --build
 
 Если `.env` уже существует, сохраните его: команды выше не перезаписывают локальную конфигурацию. Для демонстрации ключ LLM не требуется: в примере включён детерминированный `LLM_PROVIDER=fake`. Не добавляйте реальные ключи в Git. При первом запуске API применяет миграции и загружает демонстрационные данные.
 
+### Подключение LLM-провайдера
+
+Используется ProxyAPI с OpenAI-совместимым API. Чтобы подключить модели, задайте в корневом `.env` параметры:
+
+```dotenv
+LLM_PROVIDER=openai_compatible
+LLM_BASE_URL=https://api.proxyapi.ru/v1
+LLM_API_KEY=ваш-ключ-ProxyAPI
+LLM_MODEL=xiaomi/mimo-v2.6-flash
+EMBEDDINGS_PROVIDER=openai_compatible
+EMBEDDINGS_MODEL=qwen/qwen3-embedding-8b
+```
+
+Получите API-ключ в ProxyAPI и укажите его вместо примера; не добавляйте настоящий ключ в Git. Если `.env` ещё не создан, скопируйте `.env.example`, внесите настройки выше и запустите или перезапустите сервисы командой `docker compose up --build`. Для запуска без внешнего провайдера оставьте `LLM_PROVIDER=fake`: ключ и подключение не требуются.
+
 | Сервис | Адрес |
 |---|---|
 | Веб-интерфейс | http://localhost:5173 |
